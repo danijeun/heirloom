@@ -1,0 +1,102 @@
+:root {
+  --bg: #f6efe2;
+  --paper: #fffaf0;
+  --ink: #2a241c;
+  --muted: #6b5e4d;
+  --accent: #8b3a2b;
+  --uncertain: #f9d77a;
+  --border: #d6c9b3;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(24px + var(--safe-top)) 20px calc(48px + var(--safe-bottom));
+}
+
+h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 22px; margin: 24px 0 8px; }
+.tagline { color: var(--muted); margin: 0 0 32px; font-style: italic; }
+
+.card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+button, .btn {
+  font: inherit;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  min-height: 44px;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+
+label.upload {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 32px; border: 2px dashed var(--border); border-radius: 12px; cursor: pointer;
+  background: var(--paper);
+}
+
+.transcript {
+  font-size: 22px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  user-select: text;
+}
+.transcript mark.uncertain {
+  background: var(--uncertain);
+  padding: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.transcript mark.has-audio {
+  background: #c5e2c1;
+}
+
+.translation { color: var(--muted); font-size: 17px; margin-top: 12px; }
+
+.muted { color: var(--muted); }
+.error { color: #a02525; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+.recorder {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: var(--paper); border-top: 1px solid var(--border);
+  padding: 16px calc(16px + var(--safe-bottom)); display: flex; gap: 12px;
+  align-items: center; box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+}
+
+@media print {
+  body { background: white; }
+  .card, .transcript { border: none; background: white; padding: 0; }
+  button, .recorder, label.upload { display: none !important; }
+  .transcript mark.uncertain { background: transparent; text-decoration: underline dotted; }
+}
