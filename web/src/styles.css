@@ -94,13 +94,6 @@ label.upload {
   align-items: center; box-shadow: 0 -4px 16px rgba(0,0,0,.08);
 }
 
-@media print {
-  body { background: white; }
-  .card, .transcript { border: none; background: white; padding: 0; }
-  button, .recorder, label.upload { display: none !important; }
-  .transcript mark.uncertain { background: transparent; text-decoration: underline dotted; }
-}
-
 /* --- Auth header & Mine page --- */
 .header {
   display: flex;
