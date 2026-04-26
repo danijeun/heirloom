@@ -111,25 +111,30 @@ body {
 .text-background {
   position: fixed;
   top: 0;
-  width: 50%;
+  width: 25%;
   height: 100%;
   z-index: 0;
   pointer-events: none;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  align-items: center;
+  align-items: flex-end;
   overflow: hidden;
+  padding-right: 20px;
 }
 
 .text-background-left {
   left: 0;
-  background: linear-gradient(to right, rgba(0,0,0,0.05) 0%, transparent 70%);
+  background: linear-gradient(to right, rgba(0,0,0,0.05) 0%, transparent 50%);
+  align-items: flex-end;
+  padding-right: 40px;
 }
 
 .text-background-right {
   right: 0;
-  background: linear-gradient(to left, rgba(0,0,0,0.05) 0%, transparent 70%);
+  background: linear-gradient(to left, rgba(0,0,0,0.05) 0%, transparent 50%);
+  align-items: flex-start;
+  padding-left: 40px;
 }
 
 .text-background-item {
@@ -148,11 +153,11 @@ body {
 }
 
 [data-theme="dark"] .text-background-left {
-  background: linear-gradient(to right, rgba(255,255,255,0.03) 0%, transparent 70%);
+  background: linear-gradient(to right, rgba(255,255,255,0.03) 0%, transparent 50%);
 }
 
 [data-theme="dark"] .text-background-right {
-  background: linear-gradient(to left, rgba(255,255,255,0.03) 0%, transparent 70%);
+  background: linear-gradient(to left, rgba(255,255,255,0.03) 0%, transparent 50%);
 }
 
 /* ─────────────────────────────────────────────────────────────
