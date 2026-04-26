@@ -907,6 +907,23 @@ body {
   z-index: 1;
 }
 
+.header-with-badge {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: flex-start;
+  margin-bottom: var(--space-2xl);
+}
+
+.header-with-badge .badge {
+  width: 120px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.badge-dark {
+  display: none;
+}
+
 .app h1 {
   font-family: var(--font-display);
   font-size: clamp(28px, 6vw, 40px);
@@ -1053,6 +1070,14 @@ label.upload input {
 [data-theme="dark"] .progress-track { background: rgba(255,255,255,0.1); }
 
 [data-theme="dark"] .section-label { color: #A08858; }
+
+[data-theme="dark"] .badge-light {
+  display: none;
+}
+
+[data-theme="dark"] .badge-dark {
+  display: block;
+}
 
 [data-theme="dark"] .scan-image {
   background: linear-gradient(160deg, #2A1F0E 0%, #1E160A 60%, #251C0C 100%);

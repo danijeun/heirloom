@@ -8,6 +8,8 @@ import text3 from "../assets/text3.png";
 import text3D from "../assets/text3-d.png";
 import text1 from "../assets/text1.png";
 import text1D from "../assets/text1-d.png";
+import badge1 from "../assets/badge1.png";
+import badge2 from "../assets/badge2.png";
 
 export function Home() {
   const nav = useNavigate();
@@ -58,8 +60,14 @@ export function Home() {
         <img src={text3D} alt="Center image text3 dark right" />
       </div>
       <div className="app">
-        <h1>Heirloom</h1>
-        <p className="tagline">A living dictionary for dying family languages. Humans create. Claude preserves.</p>
+        <div className="header-with-badge">
+          <img src={badge1} alt="Badge" className="badge badge-light" />
+          <img src={badge2} alt="Badge dark" className="badge badge-dark" />
+          <div>
+            <h1>Heirloom</h1>
+            <p className="tagline">A living dictionary for dying family languages. Humans create. Claude preserves.</p>
+          </div>
+        </div>
 
         <div className="card">
           <h2 style={{ marginTop: -8 }}>Scan an artifact</h2>
