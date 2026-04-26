@@ -89,7 +89,7 @@ export function Home() {
           {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
         </div>
 
-        <p className="muted closing-text" style={{ fontSize: 12, marginTop: 0, textAlign: 'center' }}>
+        <p className="muted closing-text" style={{ fontSize: 12, marginTop: -12, textAlign: 'center' }}>
           Claude is the scribe. The elder is the source. The information does not exist without them.
         </p>
       </div>
