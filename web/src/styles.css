@@ -463,6 +463,26 @@ body {
   text-decoration-color: currentColor;
 }
 
+.span-add {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color 0.15s ease, text-decoration-color 0.15s ease;
+  text-decoration: underline dotted transparent;
+  text-underline-offset: 3px;
+}
+.span-add:hover,
+.span-add:focus-visible {
+  text-decoration-color: currentColor;
+  background-color: rgba(120, 80, 200, 0.08);
+  outline: none;
+}
+
 .span-dot {
   position: absolute;
   top: 0.2em;

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArtifactT, SpanT } from "../api";
-import { getArtifact, uploadAudio } from "../api";
+import { createSpan, getArtifact, uploadAudio } from "../api";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 import { SpanToken } from "../components/SpanToken";
@@ -106,6 +106,16 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
     }
   }
 
+  async function addSpan(start: number, end: number) {
+    try {
+      const created = await createSpan(artifact.id, start, end);
+      onChange();
+      setSelectedSpanId(created.id);
+    } catch (e) {
+      console.error("Add span failed:", e);
+    }
+  }
+
   async function share() {
     const url = `${location.origin}/a/${artifact.id}`;
     try {
@@ -172,20 +182,40 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
           <div className="transcription-block">
             <div className="section-label">Original - Claude&apos;s Transcription</div>
             <div className="transcription-lines">
-              {segments.map((seg, i) =>
-                seg.span ? (
-                  <SpanToken
-                    key={seg.span.id}
-                    span={seg.span}
-                    selected={selectedSpanId === seg.span.id}
-                    onSelect={setSelectedSpanId}
-                    onRecord={!readOnly ? recordSpan : undefined}
-                    readOnly={readOnly}
-                  />
-                ) : (
-                  <span key={i}>{seg.text}</span>
-                ),
-              )}
+              {segments.map((seg, i) => {
+                if (seg.span) {
+                  return (
+                    <SpanToken
+                      key={seg.span.id}
+                      span={seg.span}
+                      selected={selectedSpanId === seg.span.id}
+                      onSelect={setSelectedSpanId}
+                      onRecord={!readOnly ? recordSpan : undefined}
+                      readOnly={readOnly}
+                    />
+                  );
+                }
+                if (readOnly) return <span key={i}>{seg.text}</span>;
+                return (
+                  <span key={i}>
+                    {tokenizeGap(seg.text, seg.offset!).map((tok, j) =>
+                      tok.word ? (
+                        <button
+                          key={j}
+                          type="button"
+                          className="span-add"
+                          onClick={() => addSpan(tok.start, tok.end)}
+                          aria-label={`Add highlight to ${tok.text}`}
+                        >
+                          {tok.text}
+                        </button>
+                      ) : (
+                        <span key={j}>{tok.text}</span>
+                      ),
+                    )}
+                  </span>
+                );
+              })}
             </div>
           </div>
 
@@ -221,7 +251,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
   );
 }
 
-interface Seg { text: string; span?: SpanT }
+interface Seg { text: string; span?: SpanT; offset?: number }
 
 function buildSegments(a: ArtifactT): Seg[] {
   const t = a.transcription_text;
@@ -229,10 +259,28 @@ function buildSegments(a: ArtifactT): Seg[] {
   const out: Seg[] = [];
   let cursor = 0;
   for (const s of ordered) {
-    if (s.start_char > cursor) out.push({ text: t.slice(cursor, s.start_char) });
+    if (s.start_char > cursor) out.push({ text: t.slice(cursor, s.start_char), offset: cursor });
     out.push({ text: t.slice(s.start_char, s.end_char), span: s });
     cursor = s.end_char;
   }
-  if (cursor < t.length) out.push({ text: t.slice(cursor) });
+  if (cursor < t.length) out.push({ text: t.slice(cursor), offset: cursor });
   return out;
+}
+
+interface Tok { text: string; start: number; end: number; word: boolean }
+
+const WORD_RE = /[^\s\p{P}\p{S}]+/gu;
+
+function tokenizeGap(text: string, offset: number): Tok[] {
+  const toks: Tok[] = [];
+  let cursor = 0;
+  for (const m of text.matchAll(WORD_RE)) {
+    const s = m.index ?? 0;
+    const e = s + m[0].length;
+    if (s > cursor) toks.push({ text: text.slice(cursor, s), start: offset + cursor, end: offset + s, word: false });
+    toks.push({ text: m[0], start: offset + s, end: offset + e, word: true });
+    cursor = e;
+  }
+  if (cursor < text.length) toks.push({ text: text.slice(cursor), start: offset + cursor, end: offset + text.length, word: false });
+  return toks;
 }

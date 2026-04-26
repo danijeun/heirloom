@@ -383,9 +383,19 @@ def create_span(artifact_id: str, payload: dict):
         ).mappings().fetchone()
         if not art:
             raise HTTPException(404, "Artifact not found")
-        text = art["transcription_text"] or ""
-        if not (0 <= start < end <= len(text)):
+        transcription = art["transcription_text"] or ""
+        if not (0 <= start < end <= len(transcription)):
             raise HTTPException(400, "Invalid span range")
+        # Reject overlap with any existing span on this artifact
+        overlap = c.execute(
+            text(
+                "SELECT 1 FROM spans WHERE artifact_id=:aid "
+                "AND start_char < :end AND end_char > :start LIMIT 1"
+            ),
+            {"aid": artifact_id, "start": start, "end": end},
+        ).fetchone()
+        if overlap:
+            raise HTTPException(409, "Span overlaps an existing span")
         sid = secrets.token_hex(8)
         c.execute(
             text(
@@ -397,10 +407,10 @@ def create_span(artifact_id: str, payload: dict):
                 "artifact_id": artifact_id,
                 "start_char": start,
                 "end_char": end,
-                "text": text[start:end],
+                "text": transcription[start:end],
             },
         )
-    return {"id": sid, "start_char": start, "end_char": end, "text": text[start:end]}
+    return {"id": sid, "start_char": start, "end_char": end, "text": transcription[start:end]}
 
 
 @app.post("/api/spans/{span_id}/audio")
