@@ -117,18 +117,6 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
             </div>
           </div>
 
-          {/* Metadata */}
-          <div className="meta-grid">
-            <div className="meta-chip">
-              <div className="meta-label">Language</div>
-              <div className="meta-value">{artifact.original_language_guess || "Unknown"}</div>
-            </div>
-            <div className="meta-chip">
-              <div className="meta-label">Status</div>
-              <div className="meta-value">Ready</div>
-            </div>
-          </div>
-
           {/* Voice progress */}
           <div className="progress-wrap">
             <div className="progress-header">
@@ -139,6 +127,18 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
               aria-valuenow={voiceDone} aria-valuemin={0} aria-valuemax={voiceTotal}>
               <div className="progress-fill"
                 style={{ width: `${voiceTotal > 0 ? (voiceDone / voiceTotal) * 100 : 0}%` }}/>
+            </div>
+          </div>
+
+          {/* Metadata */}
+          <div className="meta-grid">
+            <div className="meta-chip">
+              <div className="meta-label">Language</div>
+              <div className="meta-value">{artifact.original_language_guess || "Unknown"}</div>
+            </div>
+            <div className="meta-chip">
+              <div className="meta-label">Status</div>
+              <div className="meta-value">Ready</div>
             </div>
           </div>
 
