@@ -304,6 +304,14 @@ body {
   font-family: var(--font-hand);
 }
 
+.scan-image-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: rgba(255,248,230,0.55);
+}
+
 /* ─────────────────────────────────────────────────────────────
    META CHIPS
 ───────────────────────────────────────────────────────────── */
