@@ -147,30 +147,30 @@ body {
 }
 
 .text-background-left .text-background-item:nth-child(1) {
-  top: 35%;
+  top: 15%;
 }
 
 .text-background-left .text-background-item:nth-child(2) {
-  top: 42%;
+  top: 50%;
   opacity: 0.28;
 }
 
 .text-background-left .text-background-item:nth-child(3) {
-  top: 49%;
+  top: 57%;
   opacity: 0.21;
 }
 
 .text-background-right .text-background-item:nth-child(1) {
-  top: 35%;
+  top: 15%;
 }
 
 .text-background-right .text-background-item:nth-child(2) {
-  top: 42%;
+  top: 50%;
   opacity: 0.28;
 }
 
 .text-background-right .text-background-item:nth-child(3) {
-  top: 49%;
+  top: 57%;
   opacity: 0.21;
 }
 
