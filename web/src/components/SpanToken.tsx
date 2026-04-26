@@ -11,6 +11,7 @@ const TOOLTIP_MAX_WIDTH = 280; // must match max-width in CSS
 interface Props {
   span: SpanT;
   selected: boolean;
+  justCreated?: boolean;
   onSelect: (id: string | null) => void;
   onRecord?: (spanId: string, blob: Blob, mime: string, durMs: number) => Promise<void>;
   onDeleteSpan?: (spanId: string) => Promise<void>;
@@ -18,7 +19,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, onDeleteClip, readOnly }: Props) {
+export function SpanToken({ span, selected, justCreated, onSelect, onRecord, onDeleteSpan, onDeleteClip, readOnly }: Props) {
   const hasAudio = span.audio_clips.length > 0;
   const isUncertain = span.is_uncertain;
   const [showMeanings, setShowMeanings] = useState(false);
@@ -27,6 +28,7 @@ export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, on
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
+  const lastPointerTypeRef = useRef<string>("mouse");
 
   useEffect(() => {
     if (!showMeanings) return;
@@ -103,6 +105,7 @@ export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, on
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    lastPointerTypeRef.current = event.pointerType || "mouse";
     if (!isUncertain || event.pointerType === "mouse") return;
     longPressTriggeredRef.current = false;
     clearLongPressTimer();
@@ -138,7 +141,10 @@ export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, on
     <span
       ref={wrapRef}
       className="span-wrap"
-      onMouseEnter={() => isUncertain && !selected && setShowMeanings(true)}
+      onMouseEnter={() => {
+        if (lastPointerTypeRef.current !== "mouse") return;
+        if (isUncertain && !selected) setShowMeanings(true);
+      }}
       onMouseLeave={() => {
         setShowMeanings(false);
         setTooltipStyle({});
@@ -146,7 +152,7 @@ export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, on
       onBlur={handleBlur}
     >
       <button
-        className={`span-token${isUncertain ? " uncertain" : ""}${!isUncertain && hasAudio ? " recorded" : ""}${selected ? " selected" : ""}`}
+        className={`span-token${isUncertain ? " uncertain" : ""}${!isUncertain && hasAudio ? " recorded" : ""}${selected ? " selected" : ""}${justCreated ? " just-created" : ""}`}
         onClick={handleClick}
         onFocus={() => isUncertain && !selected && setShowMeanings(true)}
         onPointerDown={handlePointerDown}

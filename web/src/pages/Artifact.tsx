@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArtifactT, SpanT } from "../api";
 import { createSpan, deleteClip, deleteSpan, getArtifact, uploadAudio } from "../api";
 import { Nav } from "../components/Nav";
@@ -79,16 +79,12 @@ export function Artifact({ readOnly = false }: Props) {
 }
 
 function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly: boolean; onChange: () => void }) {
+  const qc = useQueryClient();
   const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null);
+  const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
   function handleSelect(nextId: string | null) {
-    if (!readOnly && selectedSpanId && selectedSpanId !== nextId && artifact.id !== "demo") {
-      const prev = artifact.spans.find((s) => s.id === selectedSpanId);
-      if (prev && !prev.is_uncertain && prev.audio_clips.length === 0) {
-        deleteSpan(prev.id).then(onChange).catch((e) => console.error("Auto-cleanup failed:", e));
-      }
-    }
     setSelectedSpanId(nextId);
   }
 
@@ -135,14 +131,23 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
     }
   }
 
-  async function addSpan(start: number, end: number) {
-    try {
-      const created = await createSpan(artifact.id, start, end);
-      onChange();
+  const addSpanMut = useMutation({
+    mutationFn: ({ start, end }: { start: number; end: number }) =>
+      createSpan(artifact.id, start, end),
+    onSuccess: async (created) => {
+      await qc.invalidateQueries({ queryKey: ["artifact", artifact.id] });
       setSelectedSpanId(created.id);
-    } catch (e) {
-      console.error("Add span failed:", e);
-    }
+      setJustCreatedId(created.id);
+      window.setTimeout(() => {
+        setJustCreatedId((cur) => (cur === created.id ? null : cur));
+      }, 1100);
+    },
+    onError: (e) => console.error("Add span failed:", e),
+  });
+
+  function addSpan(start: number, end: number) {
+    if (addSpanMut.isPending) return;
+    addSpanMut.mutate({ start, end });
   }
 
   async function share() {
@@ -218,6 +223,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
                       key={seg.span.id}
                       span={seg.span}
                       selected={selectedSpanId === seg.span.id}
+                      justCreated={justCreatedId === seg.span.id}
                       onSelect={handleSelect}
                       onRecord={!readOnly ? recordSpan : undefined}
                       onDeleteSpan={!readOnly ? removeSpan : undefined}

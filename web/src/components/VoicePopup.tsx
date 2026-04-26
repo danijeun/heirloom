@@ -16,7 +16,7 @@ interface Props {
 
 export function VoicePopup({ span, onClose, onRecord, onDeleteSpan, onDeleteClip, readOnly = false }: Props) {
   const [state, setState] = useState<"idle" | "playing" | "recording">("idle");
-  const [recorded, setRecorded] = useState(span.audio_clips.length > 0);
+  const recorded = span.audio_clips.length > 0;
   const [isDeleting, setIsDeleting] = useState(false);
   const recRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -75,7 +75,6 @@ export function VoicePopup({ span, onClose, onRecord, onDeleteSpan, onDeleteClip
   async function startRecording() {
     try {
       const rec = await startMediaRecording(async (blob, mime, durMs) => {
-        setRecorded(true);
         if (onRecord) {
           await onRecord(blob, mime, durMs);
         }
@@ -104,7 +103,6 @@ export function VoicePopup({ span, onClose, onRecord, onDeleteSpan, onDeleteClip
     setIsDeleting(true);
     try {
       await onDeleteClip(clip.id);
-      setRecorded(false);
       setState("idle");
     } catch (e) {
       console.error("Delete clip failed:", e);

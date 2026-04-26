@@ -488,6 +488,21 @@ body {
   text-decoration-color: currentColor;
 }
 
+.span-token.just-created {
+  animation: span-just-created 1s ease-out;
+  border-radius: 3px;
+}
+
+@keyframes span-just-created {
+  0%   { background-color: rgba(184, 134, 11, 0); box-shadow: 0 0 0 0 rgba(184, 134, 11, 0.55); }
+  20%  { background-color: rgba(184, 134, 11, 0.30); box-shadow: 0 0 0 6px rgba(184, 134, 11, 0.18); }
+  100% { background-color: rgba(184, 134, 11, 0); box-shadow: 0 0 0 0 rgba(184, 134, 11, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .span-token.just-created { animation: none; }
+}
+
 .span-add {
   background: none;
   border: none;
@@ -855,6 +870,7 @@ body {
   padding: var(--space-xl) var(--space-xl);
   position: relative;
   z-index: 1;
+  text-align: center;
 }
 
 .app h1 {
@@ -2940,16 +2956,104 @@ body:has(.library-page--ledger) {
   opacity: 0.30;
 }
 
+/* ── Responsive: tame the moving text background on tablet/mobile ── */
+@media (max-width: 900px) {
+  .center-image,
+  .center-image-right,
+  .center-image-dark,
+  .center-image-right-dark,
+  .center-image-text3,
+  .center-image-text3-right,
+  .center-image-text3-dark,
+  .center-image-text3-right-dark {
+    opacity: 0.18;
+  }
+
+  [data-theme="dark"] .center-image-dark,
+  [data-theme="dark"] .center-image-right-dark,
+  [data-theme="dark"] .center-image-text3-dark,
+  [data-theme="dark"] .center-image-text3-right-dark {
+    opacity: 0.18;
+  }
+
+  .center-image img,
+  .center-image-right img,
+  .center-image-dark img,
+  .center-image-right-dark img,
+  .center-image-text3 img,
+  .center-image-text3-right img,
+  .center-image-text3-dark img,
+  .center-image-text3-right-dark img {
+    max-width: min(2000px, 180vw);
+  }
+
+  /* Pull the band up so it sits behind the hero text, not the upload card. */
+  .center-image,
+  .center-image-right,
+  .center-image-dark,
+  .center-image-right-dark {
+    top: 28%;
+    left: 50%;
+  }
+  .center-image-right,
+  .center-image-right-dark {
+    left: 150%;
+  }
+
+  .center-image-text3,
+  .center-image-text3-right,
+  .center-image-text3-dark,
+  .center-image-text3-right-dark {
+    top: 32%;
+    left: 50%;
+  }
+  .center-image-text3-right,
+  .center-image-text3-right-dark {
+    left: -50%;
+  }
+}
+
+@media (max-width: 560px) {
+  .center-image,
+  .center-image-right,
+  .center-image-dark,
+  .center-image-right-dark,
+  .center-image-text3,
+  .center-image-text3-right,
+  .center-image-text3-dark,
+  .center-image-text3-right-dark {
+    opacity: 0.12;
+  }
+
+  [data-theme="dark"] .center-image-dark,
+  [data-theme="dark"] .center-image-right-dark,
+  [data-theme="dark"] .center-image-text3-dark,
+  [data-theme="dark"] .center-image-text3-right-dark {
+    opacity: 0.14;
+  }
+
+  .center-image img,
+  .center-image-right img,
+  .center-image-dark img,
+  .center-image-right-dark img,
+  .center-image-text3 img,
+  .center-image-text3-right img,
+  .center-image-text3-dark img,
+  .center-image-text3-right-dark img {
+    max-width: 160vw;
+  }
+}
+
 /* ---------- Site footer (Untitled UI footer-small-03-brand) ---------- */
 .site-footer {
   position: relative;
   z-index: 2;
   margin-top: 64px;
   padding: 32px 24px 24px;
-  border-top: 1px solid var(--color-paper-deep);
-  background: transparent;
-  color: var(--color-ink-light);
+  background: var(--color-ink);
+  color: #E8D4A0;
   font-family: inherit;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.18);
 }
 .site-footer-inner {
   max-width: 1200px;
@@ -2974,7 +3078,7 @@ body:has(.library-page--ledger) {
 }
 .site-footer-tagline {
   font-size: 0.875rem;
-  color: var(--color-sepia);
+  color: #C9A876;
   max-width: 360px;
   line-height: 1.4;
 }
@@ -2993,13 +3097,13 @@ body:has(.library-page--ledger) {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  color: var(--color-sepia);
+  color: #C9A876;
   transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 .site-footer-social:hover,
 .site-footer-social:focus-visible {
-  color: var(--color-purple);
-  background: var(--color-purple-soft);
+  color: #E8C97A;
+  background: rgba(184,134,11,0.18);
   transform: translateY(-1px);
   outline: none;
 }
@@ -3007,9 +3111,9 @@ body:has(.library-page--ledger) {
   max-width: 1200px;
   margin: 24px auto 0;
   padding-top: 16px;
-  border-top: 1px solid var(--color-paper-deep);
+  border-top: 1px solid rgba(232,212,160,0.18);
   font-size: 0.8125rem;
-  color: var(--color-sepia);
+  color: #C9A876;
   text-align: center;
 }
 @media (max-width: 560px) {
