@@ -127,7 +127,6 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
           <div className="toolbar">
             <button onClick={recordSelection} disabled={recording}>Record selected text</button>
             <button className="secondary" onClick={share}>{shareCopied ? "Copied!" : "Copy share link"}</button>
-            <button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
           </div>
         )}
       </div>

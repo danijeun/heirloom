@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadImage } from "../api";
+import { recordAnonymousArtifact, useMe } from "../auth";
+import { Header } from "../components/Header";
 
 export function Home() {
   const nav = useNavigate();
+  const me = useMe();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -11,6 +14,8 @@ export function Home() {
     setErr(null); setBusy(true);
     try {
       const { id } = await uploadImage(file);
+      // If anonymous, remember the id locally so we can claim it after sign-in.
+      if (!me.data?.user) recordAnonymousArtifact(id);
       nav(`/artifact/${id}`);
     } catch (e: any) {
       setErr(e.message || "Upload failed");
@@ -20,6 +25,7 @@ export function Home() {
 
   return (
     <div className="app">
+      <Header />
       <h1>Heirloom</h1>
       <p className="tagline">A living dictionary for dying family languages.</p>
 

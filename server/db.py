@@ -85,6 +85,27 @@ audio_clips = Table(
     Column("created_at", Integer, nullable=False),
 )
 
+users = Table(
+    "users",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("google_sub", Text, nullable=False, unique=True),
+    Column("email", Text, nullable=False, unique=True),
+    Column("name", Text),
+    Column("picture_url", Text),
+    Column("created_at", Integer, nullable=False),
+    Column("last_login_at", Integer, nullable=False),
+)
+
+sessions = Table(
+    "sessions",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("user_id", Text, ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    Column("created_at", Integer, nullable=False),
+    Column("expires_at", Integer, nullable=False),
+)
+
 
 def init_db() -> None:
     metadata.create_all(engine)
@@ -95,8 +116,18 @@ def init_db() -> None:
         conn.exec_driver_sql(
             "CREATE INDEX IF NOT EXISTS idx_audio_span ON audio_clips(span_id)"
         )
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)"
+        )
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)"
+        )
         _ensure_audio_content_column(conn)
         _ensure_span_meaning_options_column(conn)
+        _ensure_artifact_owner_column(conn)
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS idx_artifacts_owner ON artifacts(owner_user_id)"
+        )
 
 
 def _ensure_audio_content_column(conn) -> None:
@@ -114,6 +145,11 @@ def _ensure_span_meaning_options_column(conn) -> None:
     column_names = {col["name"] for col in inspector.get_columns("spans")}
     if "meaning_options" not in column_names:
         conn.exec_driver_sql("ALTER TABLE spans ADD COLUMN meaning_options TEXT")
+def _ensure_artifact_owner_column(conn) -> None:
+    inspector = inspect(conn)
+    column_names = {col["name"] for col in inspector.get_columns("artifacts")}
+    if "owner_user_id" not in column_names:
+        conn.exec_driver_sql("ALTER TABLE artifacts ADD COLUMN owner_user_id TEXT")
 
 
 @contextmanager
