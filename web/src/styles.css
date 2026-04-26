@@ -287,6 +287,7 @@ body {
   color: var(--color-ink);
   line-height: 1.3;
   text-wrap: pretty;
+  text-align: center;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -317,11 +318,13 @@ body {
 ───────────────────────────────────────────────────────────── */
 .meta-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-md);
+  justify-items: center;
+  text-align: center;
 }
 
-.meta-chip {}
+.meta-chip { text-align: center; }
 
 .meta-label {
   font-size: 10px;
@@ -903,9 +906,9 @@ body {
   color: var(--color-sepia);
   margin: 0 0 var(--space-2xl);
   font-style: italic;
-  font-size: clamp(14px, 2.2vw, 17px);
+  font-size: clamp(12px, 1.6vw, 14px);
   line-height: 1.5;
-  text-wrap: pretty;
+  white-space: nowrap;
 }
 
 .card {
@@ -2813,7 +2816,7 @@ body:has(.library-page--ledger) {
   left: 40%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-left 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-left 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2830,7 +2833,7 @@ body:has(.library-page--ledger) {
   left: 160%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-left 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-left 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2847,7 +2850,7 @@ body:has(.library-page--ledger) {
   left: 40%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-left 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-left 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2864,7 +2867,7 @@ body:has(.library-page--ledger) {
   left: 160%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-left 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-left 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2892,7 +2895,7 @@ body:has(.library-page--ledger) {
   left: 80%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-right 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-right 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2909,7 +2912,7 @@ body:has(.library-page--ledger) {
   left: -40%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-right 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-right 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2926,7 +2929,7 @@ body:has(.library-page--ledger) {
   left: 80%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-right 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-right 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -2943,7 +2946,7 @@ body:has(.library-page--ledger) {
   left: -40%;
   z-index: -2;
   pointer-events: none;
-  animation: move-images-right 32s linear infinite;
+  animation: fadeInGradual 1.5s ease-out forwards, move-images-right 32s linear infinite;
   opacity: 0.30;
 }
 
@@ -3130,4 +3133,124 @@ body:has(.library-page--ledger) {
 }
 @media print {
   .site-footer { display: none; }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInGradual {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.30;
+  }
+}
+
+@keyframes draw {
+  0% { transform: translateX(0) rotate(-20deg); }
+  50% { transform: translateX(150px) rotate(-20deg); }
+  100% { transform: translateX(0) rotate(-20deg); }
+}
+
+@keyframes line-grow {
+  0% { width: 0; }
+  50% { width: 150px; }
+  100% { width: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LOADER (Pencil drawing animation)
+───────────────────────────────────────────────────────────── */
+.loader {
+  position: relative;
+  width: 200px;
+  height: 100px;
+  margin: 0 auto;
+}
+
+.pencil {
+  position: absolute;
+  width: 50px;
+  height: 10px;
+  background: #ffcc00;
+  bottom: 0;
+  left: 0;
+  transform-origin: left center;
+  animation: draw 2s infinite linear;
+}
+
+.pencil::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 0;
+  border-right: 10px solid #d2b48c;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.pencil-body {
+  width: 100%;
+  height: 100%;
+}
+
+.pencil-eraser {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 0;
+  height: 100%;
+}
+
+.line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-ink);
+  animation: line-grow 2s infinite linear;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TEXT BACKGROUND (decorative centered text)
+───────────────────────────────────────────────────────────── */
+.header-with-badge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: -8px;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.header-with-badge .badge {
+  width: 80px;
+  height: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: -6px;
+}
+
+.header-with-badge > div {
+  text-align: left;
+}
+
+.badge-dark {
+  display: none;
+}
+
+[data-theme="dark"] .badge-light {
+  display: none;
+}
+
+[data-theme="dark"] .badge-dark {
+  display: block;
 }

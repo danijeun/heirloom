@@ -9,6 +9,8 @@ import text1 from "../assets/text1.png";
 import text1D from "../assets/text1-d.png";
 import text3 from "../assets/text3.png";
 import text3D from "../assets/text3-d.png";
+import badge1 from "../assets/badge1.png";
+import badge2 from "../assets/badge2.png";
 
 export function Home() {
   const nav = useNavigate();
@@ -43,21 +45,21 @@ export function Home() {
       <div className="center-image-text3-dark"><img src={text3D} alt="" aria-hidden="true" /></div>
       <div className="center-image-text3-right-dark"><img src={text3D} alt="" aria-hidden="true" /></div>
       <div className="app">
-        <motion.h1
+        <motion.div
+          className="header-with-badge"
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          Heirloom
-        </motion.h1>
-        <motion.p
-          className="tagline"
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
-        >
-          A living dictionary for dying family languages. Humans create. Claude preserves.
-        </motion.p>
+          <img src={badge1} alt="" aria-hidden="true" className="badge badge-light" />
+          <img src={badge2} alt="" aria-hidden="true" className="badge badge-dark" />
+          <div>
+            <h1>Heirloom</h1>
+            <p className="tagline">
+              A living dictionary for dying family languages. Humans create. Claude preserves.
+            </p>
+          </div>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -70,17 +72,27 @@ export function Home() {
               Photograph a handwritten letter, recipe, or note. We will transcribe it as best we can.
               Then an elder records what only they can pronounce.
             </p>
-            <label className="upload">
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/heic,image/heif,image/webp"
-                capture="environment"
-                disabled={busy}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
-              />
-              <span style={{ fontSize: 22 }}>{busy ? "Uploading…" : "Tap to take or choose a photo"}</span>
-              <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
-            </label>
+            {busy ? (
+              <div className="loader">
+                <div className="pencil">
+                  <div className="pencil-body"></div>
+                  <div className="pencil-eraser"></div>
+                </div>
+                <div className="line"></div>
+              </div>
+            ) : (
+              <label className="upload">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/heic,image/heif,image/webp"
+                  capture="environment"
+                  disabled={busy}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+                />
+                <span style={{ fontSize: 22 }}>Tap to take or choose a photo</span>
+                <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
+              </label>
+            )}
             {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
           </div>
         </motion.div>

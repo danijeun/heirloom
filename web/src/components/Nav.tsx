@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useTheme } from "../useTheme";
 import { logout, useMe } from "../auth";
 import logo1 from "../assets/heirloom-logo1.png";
-import logo2 from "../assets/heirloom-logo2.png";
 
 interface Props {
   onExportPDF?: () => void;
@@ -16,7 +14,6 @@ interface Props {
 export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = true }: Props) {
   const nav = useNavigate();
   const qc = useQueryClient();
-  const { theme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -26,7 +23,7 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
   const user = me.data?.user ?? null;
   const googleConfigured = me.data?.google_configured ?? false;
 
-  const logoSrc = theme === 'dark' ? logo2 : logo1;
+  const logoSrc = logo1;
 
   useEffect(() => {
     if (!menuOpen && !userMenuOpen) return;
@@ -67,9 +64,6 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
         <button className="nav-btn" onClick={() => nav("/mine")} aria-label="My Library">
           <span className="hamburger">☰</span>
           <span className="nav-btn-label">My Library</span>
-        </button>
-        <button className="nav-btn nav-theme-btn" onClick={toggleTheme} aria-label="Toggle dark mode">
-          {theme === 'dark' ? '☀️' : '🌙'}
         </button>
         {canGoBack && (
           <button className="nav-btn" onClick={() => nav(-1)} aria-label="Go back">
@@ -122,11 +116,8 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
         ) : null}
       </div>
 
-      {/* Mobile: theme toggle + menu */}
+      {/* Mobile: menu */}
       <div className="nav-actions-mobile">
-        <button className="nav-btn nav-theme-btn" onClick={toggleTheme} aria-label="Toggle dark mode">
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
         <div className="nav-menu-wrap" ref={menuRef}>
           <button
             className="nav-btn"

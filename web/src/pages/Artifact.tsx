@@ -164,7 +164,6 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
   return (
     <>
       <Nav
-        onExportPDF={() => window.print()}
         onShare={() => share()}
         shareCopied={shareCopied}
       />
@@ -201,23 +200,6 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
             </div>
           </div>
 
-          <div className="meta-grid">
-            <div className="meta-chip">
-              <div className="meta-label">Language</div>
-              <div className="meta-value">{artifact.original_language_guess || "Unknown"}</div>
-            </div>
-            <div className="meta-chip">
-              <div className="meta-label">Status</div>
-              <div className="meta-value">Ready</div>
-            </div>
-          </div>
-
-          {!readOnly && (
-            <p className="sidebar-hint">
-              Hover purple words to preview possible meanings.
-              Click to open recording, or long press on touch devices to see the meanings first.
-            </p>
-          )}
         </aside>
 
         <section className="main-col">

@@ -1,13 +1,10 @@
-import { useTheme } from "../useTheme";
 import logo1 from "../assets/heirloom-logo1.png";
-import logo2 from "../assets/heirloom-logo2.png";
 
 const GITHUB_URL = "https://github.com/danijeun/heirloom";
 const DEVPOST_URL = "https://devpost.com/software/heirloom-jvcg3a";
 
 export function Footer() {
-  const { theme } = useTheme();
-  const logoSrc = theme === "dark" ? logo2 : logo1;
+  const logoSrc = logo1;
   const year = new Date().getFullYear();
 
   return (
