@@ -1,0 +1,12 @@
+C:\Users\Owner\Documents\ClaudeHackNJIT\heirloom\.venv\Lib\site-packages\authlib\_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+It will be compatible before version 2.0.0.
+  from authlib.jose import ECKey
+INFO:     Started server process [23136]
+INFO:     Waiting for application startup.
+2026-04-26 12:50:01,362 INFO startup ok database_url=False database_path=C:\Users\Owner\Documents\ClaudeHackNJIT\heirloom\.local\heirloom.db audio_dir=C:\Users\Owner\Documents\ClaudeHackNJIT\heirloom\.local\audio
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+2026-04-26 12:50:17,582 INFO rid=e4a0f4e4931a GET / -> 200 1ms
+2026-04-26 12:50:26,775 INFO rid=9dd12333cc43 GET / -> 200 0ms
+2026-04-26 12:50:43,493 INFO rid=20431b01ce73 GET /api/me -> 200 2ms
+2026-04-26 12:50:46,660 INFO rid=2480da313868 GET /api/me -> 200 3ms

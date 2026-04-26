@@ -2,12 +2,33 @@
 
 *A living dictionary for dying family languages. Humans create. Claude preserves.*
 
+[![Live demo](https://img.shields.io/badge/demo-heirloom--production-cc785c)](https://heirloom-production-92b1.up.railway.app/)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![FastAPI](https://img.shields.io/badge/fastapi-0.115-009688)
 ![React](https://img.shields.io/badge/react-19-61dafb)
 ![Vite](https://img.shields.io/badge/vite-8-646cff)
 ![Claude](https://img.shields.io/badge/claude-opus--4--7-cc785c)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+**Live:** https://heirloom-production-92b1.up.railway.app/ — open on a phone, scan a handwritten artifact, record a voice note over any word, share by link.
+
+## Table of contents
+
+- [Why Heirloom](#why-heirloom)
+- [Golden path](#golden-path)
+- [Quickstart](#quickstart)
+- [Configuration](#configuration)
+- [API](#api)
+- [Architecture](#architecture)
+- [Data model](#data-model)
+- [Claude integration](#claude-integration)
+- [Deploy on Railway](#deploy-on-railway)
+- [Docker](#docker)
+- [Project structure](#project-structure)
+- [Privacy and ethics](#privacy-and-ethics)
+- [Roadmap](#roadmap)
+- [Limitations](#limitations)
+- [License](#license)
 
 ## Why Heirloom
 
@@ -57,6 +78,9 @@ Vite proxies `/api/*` to FastAPI on port 8000. SQLite is the default store. Set 
 | `HEIRLOOM_MAX_AUDIO_MB` | `4` | Hard cap on incoming audio size. |
 | `HEIRLOOM_MAX_AUDIO_SECONDS` | `60` | Server side enforced audio duration cap. |
 | `HEIRLOOM_MAX_CALLS_PER_HOUR` | `60` | Per IP rate limit, rolling one hour window. |
+| `HEIRLOOM_COOKIE_SECRET` | required for auth | Signs session cookies. 32 bytes hex. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Enables Google OAuth sign in. |
+| `HEIRLOOM_BASE_URL` | request host | Public base URL used for OAuth redirects. |
 
 ## API
 
@@ -69,6 +93,12 @@ Vite proxies `/api/*` to FastAPI on port 8000. SQLite is the default store. Set 
 | `POST` | `/api/artifacts/{id}/spans` | Create a user selected span for attaching audio. |
 | `POST` | `/api/spans/{id}/audio` | Multipart audio upload bound to a span. |
 | `GET` | `/api/audio/{id}` | Streams the stored audio clip. |
+| `GET` | `/auth/google/login` | Begins Google OAuth sign in. |
+| `GET` | `/auth/google/callback` | OAuth callback. Sets a signed session cookie. |
+| `POST` | `/auth/logout` | Clears the session cookie. |
+| `GET` | `/api/me` | Current user, or anonymous session info. |
+| `GET` | `/api/me/artifacts` | Artifacts owned by the signed in user. |
+| `POST` | `/api/me/claim` | Claim anonymous artifacts after sign in. |
 
 Sample artifact response:
 
