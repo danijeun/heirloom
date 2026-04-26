@@ -987,6 +987,23 @@ body {
   animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
+.symbol-container {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-lg);
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.symbol {
+  width: 60px;
+  height: auto;
+  display: block;
+}
+
+.symbol-dark {
+  display: none;
+}
+
 .muted {
   color: var(--color-sepia);
 }
@@ -1098,6 +1115,14 @@ label.upload input {
 }
 
 [data-theme="dark"] .badge-dark {
+  display: block;
+}
+
+[data-theme="dark"] .symbol-light {
+  display: none;
+}
+
+[data-theme="dark"] .symbol-dark {
   display: block;
 }
 

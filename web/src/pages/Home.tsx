@@ -10,6 +10,8 @@ import text1 from "../assets/text1.png";
 import text1D from "../assets/text1-d.png";
 import badge1 from "../assets/badge1.png";
 import badge2 from "../assets/badge2.png";
+import symbol1 from "../assets/symbol1.png";
+import symbol2 from "../assets/symbol2.png";
 
 export function Home() {
   const nav = useNavigate();
@@ -92,6 +94,11 @@ export function Home() {
         <p className="muted closing-text" style={{ fontSize: 12, marginTop: -12, textAlign: 'center' }}>
           Claude is the scribe. The elder is the source. The information does not exist without them.
         </p>
+
+        <div className="symbol-container">
+          <img src={symbol1} alt="Symbol" className="symbol symbol-light" />
+          <img src={symbol2} alt="Symbol dark" className="symbol symbol-dark" />
+        </div>
       </div>
     </>
   );
