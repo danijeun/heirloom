@@ -902,7 +902,7 @@ body {
 .app {
   max-width: 760px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-xl);
+  padding: var(--space-md) var(--space-xl);
   position: relative;
   z-index: 1;
 }
