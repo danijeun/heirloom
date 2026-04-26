@@ -71,45 +71,37 @@ export function Home() {
           </div>
         </div>
 
-        {busy ? (
-          <div className="loader-container">
+        <div className="card">
+          <h2 style={{ marginTop: -8 }}>Scan an artifact</h2>
+          <p className="muted" style={{ marginBottom: 24 }}>
+            Photograph a handwritten letter, recipe, or note. We will transcribe it as best we can.
+            Then an elder records what only they can pronounce.
+          </p>
+          <label className="upload">
             <input
               type="file"
               accept="image/jpeg,image/png,image/heic,image/heif,image/webp"
               capture="environment"
               disabled={busy}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
-              style={{ display: 'none' }}
             />
-            <div className="loader">
-              <div className="pencil">
-                <div className="pencil-body"></div>
-                <div className="pencil-eraser"></div>
+            {busy ? (
+              <div className="loader">
+                <div className="pencil">
+                  <div className="pencil-body"></div>
+                  <div className="pencil-eraser"></div>
+                </div>
+                <div className="line"></div>
               </div>
-              <div className="line"></div>
-            </div>
-          </div>
-        ) : (
-          <div className="card">
-            <h2 style={{ marginTop: -8 }}>Scan an artifact</h2>
-            <p className="muted" style={{ marginBottom: 24 }}>
-              Photograph a handwritten letter, recipe, or note. We will transcribe it as best we can.
-              Then an elder records what only they can pronounce.
-            </p>
-            <label className="upload">
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/heic,image/heif,image/webp"
-                capture="environment"
-                disabled={busy}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
-              />
-              <span style={{ fontSize: 22 }}>Tap to take or choose a photo</span>
-              <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
-            </label>
-            {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
-          </div>
-        )}
+            ) : (
+              <>
+                <span style={{ fontSize: 22 }}>Tap to take or choose a photo</span>
+                <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
+              </>
+            )}
+          </label>
+          {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
+        </div>
 
         <p className="muted closing-text" style={{ fontSize: 12, marginTop: -12, textAlign: 'center' }}>
           Claude is the scribe. The elder is the source. The information does not exist without them.
