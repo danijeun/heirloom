@@ -8,7 +8,6 @@ import text3 from "../assets/text3.png";
 import text3D from "../assets/text3-d.png";
 import text1 from "../assets/text1.png";
 import text1D from "../assets/text1-d.png";
-import book from "../assets/book.png";
 
 export function Home() {
   const nav = useNavigate();
@@ -62,7 +61,7 @@ export function Home() {
         <h1>Heirloom</h1>
         <p className="tagline">A living dictionary for dying family languages. Humans create. Claude preserves.</p>
 
-        <div className="card" style={{ backgroundImage: `url(${book})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="card">
           <h2 style={{ marginTop: -8 }}>Scan an artifact</h2>
           <p className="muted" style={{ marginBottom: 24 }}>
             Photograph a handwritten letter, recipe, or note. We will transcribe it as best we can.
