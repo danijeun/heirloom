@@ -69,6 +69,7 @@ spans = Table(
     Column("end_char", Integer, nullable=False),
     Column("text", Text, nullable=False),
     Column("is_uncertain", Integer, nullable=False, server_default=text("0")),
+    Column("meaning_options", Text),
 )
 
 audio_clips = Table(
@@ -95,6 +96,7 @@ def init_db() -> None:
             "CREATE INDEX IF NOT EXISTS idx_audio_span ON audio_clips(span_id)"
         )
         _ensure_audio_content_column(conn)
+        _ensure_span_meaning_options_column(conn)
 
 
 def _ensure_audio_content_column(conn) -> None:
@@ -105,6 +107,13 @@ def _ensure_audio_content_column(conn) -> None:
         conn.exec_driver_sql(f"ALTER TABLE audio_clips ADD COLUMN content {binary_type}")
     if "file_path" not in column_names:
         conn.exec_driver_sql("ALTER TABLE audio_clips ADD COLUMN file_path TEXT")
+
+
+def _ensure_span_meaning_options_column(conn) -> None:
+    inspector = inspect(conn)
+    column_names = {col["name"] for col in inspector.get_columns("spans")}
+    if "meaning_options" not in column_names:
+        conn.exec_driver_sql("ALTER TABLE spans ADD COLUMN meaning_options TEXT")
 
 
 @contextmanager

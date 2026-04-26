@@ -97,6 +97,15 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
                 title={seg.span.audio_clips.length ? "Has voice note — tap to play" : "Tap to record"}
               >
                 {seg.text}
+                {!!seg.span.meaning_options.length && (
+                  <span style={{ display: "block", marginTop: 8, fontSize: 12, lineHeight: 1.4 }}>
+                    {seg.span.meaning_options.map((option, idx) => (
+                      <span key={`${seg.span!.id}-meaning-${idx}`} style={{ display: "block" }}>
+                        {idx + 1}. <strong>{option.word}</strong>: {option.meaning}
+                      </span>
+                    ))}
+                  </span>
+                )}
                 {seg.span.audio_clips.map((c) => (
                   <audio key={c.id} src={c.url} controls style={{ display: "block", marginTop: 4, width: "100%" }} />
                 ))}
