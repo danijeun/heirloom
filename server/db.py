@@ -11,6 +11,7 @@ from sqlalchemy import (
     Table,
     Text,
     create_engine,
+    event,
     inspect,
     text,
 )
@@ -41,6 +42,16 @@ def _build_engine():
 
 
 engine = _build_engine()
+
+
+@event.listens_for(engine, "connect")
+def _enable_sqlite_fk(dbapi_connection, _):
+    if engine.dialect.name == "sqlite":
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+
 metadata = MetaData()
 
 artifacts = Table(

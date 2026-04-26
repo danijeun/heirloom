@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { fetchMyArtifacts, useMe } from "../auth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteArtifact, fetchMyArtifacts, useMe, type MyArtifactRow } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 import { PaperStack } from "../components/PaperStack";
@@ -27,14 +27,79 @@ function entryNo(i: number): string {
   return "No. " + String(i + 1).padStart(3, "0");
 }
 
+const UNDO_MS = 5000;
+
 export function Mine() {
   const me = useMe();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const list = useQuery({
     queryKey: ["my-artifacts"],
     queryFn: fetchMyArtifacts,
     enabled: !!me.data?.user,
   });
+
+  // Confirm-state on a specific card (grid mode).
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  // Pending soft-delete: item is hidden in UI; actual DELETE fires after UNDO_MS.
+  const [pending, setPending] = useState<{ item: MyArtifactRow; expiresAt: number } | null>(null);
+  const pendingTimer = useRef<number | null>(null);
+
+  function clearPendingTimer() {
+    if (pendingTimer.current != null) {
+      window.clearTimeout(pendingTimer.current);
+      pendingTimer.current = null;
+    }
+  }
+
+  async function fireDelete(id: string) {
+    try {
+      await deleteArtifact(id);
+    } catch {
+      // Restore on failure.
+      qc.invalidateQueries({ queryKey: ["my-artifacts"] });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["my-artifacts"] });
+  }
+
+  function startSoftDelete(item: MyArtifactRow) {
+    setConfirmId(null);
+    // Optimistic remove.
+    qc.setQueryData<MyArtifactRow[]>(["my-artifacts"], (prev) =>
+      (prev ?? []).filter((a) => a.id !== item.id)
+    );
+    clearPendingTimer();
+    setPending({ item, expiresAt: Date.now() + UNDO_MS });
+    pendingTimer.current = window.setTimeout(() => {
+      setPending(null);
+      pendingTimer.current = null;
+      fireDelete(item.id);
+    }, UNDO_MS);
+  }
+
+  function undoDelete() {
+    if (!pending) return;
+    clearPendingTimer();
+    qc.setQueryData<MyArtifactRow[]>(["my-artifacts"], (prev) => {
+      const list = prev ?? [];
+      if (list.some((a) => a.id === pending.item.id)) return list;
+      return [pending.item, ...list];
+    });
+    setPending(null);
+  }
+
+  // If user navigates away with a pending delete, fire it now.
+  useEffect(() => {
+    return () => {
+      if (pendingTimer.current != null && pending) {
+        clearPendingTimer();
+        fireDelete(pending.item.id);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [mode, setMode] = useState<Mode>(() => {
     try {
@@ -174,30 +239,73 @@ export function Mine() {
                 initialIndex={Math.min(initialIndex, items.length - 1)}
                 onIndexChange={handleIndexChange}
                 onOpen={(id) => navigate(`/artifact/${id}`)}
+                onDelete={(item) => startSoftDelete(item)}
               />
             ) : (
               <section className="ledger-grid" aria-label="Index">
-                {items.map((a, idx) => (
-                  <Link to={`/artifact/${a.id}`} key={a.id} className="ledger-card">
-                    <div className="ledger-card-no">{entryNo(idx)}</div>
-                    <h3 className="ledger-card-title">
-                      {a.original_language_guess || "Untitled fragment"}
-                    </h3>
-                    <div className="ledger-card-rule" aria-hidden="true" />
-                    <time
-                      className="ledger-card-date"
-                      dateTime={new Date(a.created_at * 1000).toISOString()}
-                    >
-                      {formatDate(a.created_at)}
-                    </time>
-                    <p className="ledger-card-preview">
-                      {truncate(a.transcription_preview, 110) || "(no transcription yet)"}
-                    </p>
-                  </Link>
-                ))}
+                {items.map((a, idx) => {
+                  const inConfirm = confirmId === a.id;
+                  return (
+                    <div key={a.id} className="ledger-card-wrap">
+                      {inConfirm ? (
+                        <div className="ledger-card ledger-card--confirm" role="alertdialog" aria-label="Confirm delete">
+                          <div className="ledger-card-no">{entryNo(idx)}</div>
+                          <h3 className="ledger-card-title">Delete this entry?</h3>
+                          <div className="ledger-card-rule" aria-hidden="true" />
+                          <p className="ledger-card-preview">
+                            Removes the scan, transcription, and any voice recordings.
+                          </p>
+                          <div className="ledger-card-actions">
+                            <button
+                              type="button"
+                              className="ledger-link"
+                              onClick={() => setConfirmId(null)}
+                            >Keep</button>
+                            <button
+                              type="button"
+                              className="ledger-link ledger-link--strong"
+                              autoFocus
+                              onClick={() => startSoftDelete(a)}
+                            >Delete</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Link to={`/artifact/${a.id}`} className="ledger-card">
+                          <div className="ledger-card-no">{entryNo(idx)}</div>
+                          <button
+                            type="button"
+                            className="ledger-remove"
+                            aria-label="Remove this entry"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmId(a.id); }}
+                          >Remove</button>
+                          <h3 className="ledger-card-title">
+                            {a.original_language_guess || "Untitled fragment"}
+                          </h3>
+                          <div className="ledger-card-rule" aria-hidden="true" />
+                          <time
+                            className="ledger-card-date"
+                            dateTime={new Date(a.created_at * 1000).toISOString()}
+                          >
+                            {formatDate(a.created_at)}
+                          </time>
+                          <p className="ledger-card-preview">
+                            {truncate(a.transcription_preview, 110) || "(no transcription yet)"}
+                          </p>
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
               </section>
             )}
           </>
+        )}
+
+        {pending && (
+          <div className="ledger-undo" role="status" aria-live="polite">
+            <span>Removed “{pending.item.original_language_guess || "Untitled fragment"}”.</span>
+            <button type="button" className="ledger-link" onClick={undoDelete}>Undo</button>
+          </div>
         )}
       </main>
     </>

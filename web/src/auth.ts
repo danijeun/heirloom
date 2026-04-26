@@ -70,6 +70,22 @@ export interface MyArtifactRow {
   has_translation: boolean;
 }
 
+export async function deleteArtifact(id: string): Promise<void> {
+  const r = await fetch(`/api/artifacts/${id}`, {
+    method: "DELETE",
+    credentials: "same-origin",
+    headers: { "X-Requested-With": "heirloom-web" },
+  });
+  if (r.status === 204 || r.status === 404) {
+    try {
+      const ids = getAnonymousArtifactIds().filter((x) => x !== id);
+      localStorage.setItem(ANON_KEY, JSON.stringify(ids));
+    } catch {}
+    return;
+  }
+  throw new Error(await r.text());
+}
+
 export async function fetchMyArtifacts(): Promise<MyArtifactRow[]> {
   const r = await fetch("/api/me/artifacts", { credentials: "same-origin" });
   if (!r.ok) throw new Error(await r.text());

@@ -30,11 +30,12 @@ function sortItems(items: MyArtifactRow[]): MyArtifactRow[] {
 interface Props {
   items: MyArtifactRow[];
   onOpen: (id: string) => void;
+  onDelete?: (item: MyArtifactRow) => void;
   initialIndex?: number;
   onIndexChange?: (i: number) => void;
 }
 
-export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: Props) {
+export function PaperStack({ items, onOpen, onDelete, initialIndex = 0, onIndexChange }: Props) {
   const sorted = useMemo(() => sortItems(items), [items]);
   const total = sorted.length;
   const [index, setIndex] = useState(() => Math.min(Math.max(initialIndex, 0), Math.max(0, total - 1)));
@@ -43,6 +44,7 @@ export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: P
   const [lifting, setLifting] = useState(false);
   const [showHint, setShowHint] = useState(true);
   const [announce, setAnnounce] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   const navigatingRef = useRef(false);
   const pointerRef = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
@@ -80,8 +82,19 @@ export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: P
     }, SLIDE_MS);
   }
 
+  useEffect(() => { setConfirming(false); }, [index, total]);
+
+  useEffect(() => {
+    if (!confirming) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setConfirming(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirming]);
+
   function handlePointerDown(e: React.PointerEvent) {
-    if (exiting || lifting || navigatingRef.current) return;
+    if (exiting || lifting || navigatingRef.current || confirming) return;
     pointerRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }
@@ -112,7 +125,7 @@ export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: P
   }
 
   function handleTap() {
-    if (lifting || navigatingRef.current || exiting) return;
+    if (lifting || navigatingRef.current || exiting || confirming) return;
     const top = sorted[index];
     if (!top) return;
     navigatingRef.current = true;
@@ -166,35 +179,90 @@ export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: P
               key={item.id}
               ref={isTop ? topBtnRef : undefined}
               type="button"
-              className={className}
+              className={className + (isTop && confirming ? " paper-card--confirm" : "")}
               style={style}
               tabIndex={isTop ? 0 : -1}
               aria-hidden={!isTop}
               aria-label={
-                isTop
+                isTop && !confirming
                   ? `${item.original_language_guess || "Untitled fragment"}, ${formatDate(item.created_at)}. Entry ${index + 1} of ${total}. Tap to open, swipe to browse.`
                   : undefined
               }
-              onPointerDown={isTop ? handlePointerDown : undefined}
-              onPointerMove={isTop ? handlePointerMove : undefined}
-              onPointerUp={isTop ? endPointer : undefined}
-              onPointerCancel={isTop ? (() => { pointerRef.current = null; setDrag(0); }) : undefined}
-              onKeyDown={isTop ? handleKeyDown : undefined}
+              onPointerDown={isTop && !confirming ? handlePointerDown : undefined}
+              onPointerMove={isTop && !confirming ? handlePointerMove : undefined}
+              onPointerUp={isTop && !confirming ? endPointer : undefined}
+              onPointerCancel={isTop && !confirming ? (() => { pointerRef.current = null; setDrag(0); }) : undefined}
+              onKeyDown={isTop && !confirming ? handleKeyDown : undefined}
               disabled={!isTop && slot !== 1}
             >
               <div className="paper-card-no">
                 No. {String(sorted.indexOf(item) + 1).padStart(3, "0")}
               </div>
-              <h3 className="paper-card-title">
-                {item.original_language_guess || "Untitled fragment"}
-              </h3>
-              <div className="paper-card-rule" aria-hidden="true" />
-              <time className="paper-card-date" dateTime={new Date(item.created_at * 1000).toISOString()}>
-                {formatDate(item.created_at)}
-              </time>
-              <p className="paper-card-preview">
-                {truncate(item.transcription_preview, 140) || "(no transcription yet)"}
-              </p>
+              {isTop && onDelete && !confirming && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Remove this entry"
+                  className="paper-remove"
+                  onPointerDown={(e) => { e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirming(true); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.stopPropagation(); e.preventDefault(); setConfirming(true);
+                    }
+                  }}
+                >Remove</span>
+              )}
+              {isTop && confirming ? (
+                <div className="paper-card-confirm" role="alertdialog" aria-label="Confirm delete">
+                  <h3 className="paper-card-title">Delete this entry?</h3>
+                  <div className="paper-card-rule" aria-hidden="true" />
+                  <p className="paper-card-preview">
+                    Removes the scan, transcription, and any voice recordings.
+                  </p>
+                  <div className="paper-card-actions">
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="ledger-link"
+                      onClick={(e) => { e.stopPropagation(); setConfirming(false); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setConfirming(false); }
+                      }}
+                    >Keep</span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="ledger-link ledger-link--strong"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirming(false);
+                        onDelete?.(item);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          setConfirming(false);
+                          onDelete?.(item);
+                        }
+                      }}
+                    >Delete</span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="paper-card-title">
+                    {item.original_language_guess || "Untitled fragment"}
+                  </h3>
+                  <div className="paper-card-rule" aria-hidden="true" />
+                  <time className="paper-card-date" dateTime={new Date(item.created_at * 1000).toISOString()}>
+                    {formatDate(item.created_at)}
+                  </time>
+                  <p className="paper-card-preview">
+                    {truncate(item.transcription_preview, 140) || "(no transcription yet)"}
+                  </p>
+                </>
+              )}
               <span className="paper-card-grain" aria-hidden="true" />
             </button>
           );

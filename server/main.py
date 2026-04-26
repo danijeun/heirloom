@@ -1,6 +1,7 @@
 import logging
 import os
 import secrets
+import shutil
 import time
 import json
 from pathlib import Path
@@ -280,6 +281,28 @@ def demo_artifact():
                    ],
                    "audio_clips": []}],
     }
+
+
+@app.delete("/api/artifacts/{artifact_id}", status_code=204)
+def delete_artifact(artifact_id: str, request: Request, user=Depends(require_user)):
+    if request.headers.get("x-requested-with") != "heirloom-web":
+        raise HTTPException(400, "Missing required header")
+    with db.conn() as c:
+        result = c.execute(
+            text("DELETE FROM artifacts WHERE id=:id AND owner_user_id=:uid"),
+            {"id": artifact_id, "uid": user["id"]},
+        )
+        if result.rowcount == 0:
+            log.warning("delete miss user=%s artifact=%s", user["id"], artifact_id)
+            raise HTTPException(404, "Not found")
+    if AUDIO_DIR is not None:
+        folder = AUDIO_DIR / artifact_id
+        if folder.exists():
+            try:
+                shutil.rmtree(folder)
+            except OSError as e:
+                log.warning("rmtree failed artifact=%s err=%s", artifact_id, e)
+    return Response(status_code=204)
 
 
 @app.get("/api/artifacts/{artifact_id}")

@@ -2381,3 +2381,108 @@ body:has(.library-page--ledger) {
 [data-theme="dark"] .library-page--ledger .paper-card {
   border-color: rgba(242,233,208,0.18);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   LEDGER — Remove / Confirm / Undo
+───────────────────────────────────────────────────────────── */
+.ledger-card-wrap { position: relative; }
+
+.ledger-remove,
+.paper-remove {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-sepia);
+  cursor: pointer;
+  /* Visible label is small, hit area padded to ≥44px */
+  padding: 14px 14px;
+  margin: -14px -14px;
+  border-radius: 2px;
+  transition: color 0.18s ease, background 0.18s ease;
+  z-index: 3;
+}
+.ledger-remove:hover,
+.paper-remove:hover { color: var(--color-ink); }
+.ledger-remove:focus-visible,
+.paper-remove:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.ledger-card--confirm,
+.paper-card--confirm { cursor: default; }
+
+.paper-card-confirm { display: contents; }
+
+.ledger-card-actions,
+.paper-card-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  align-items: baseline;
+}
+.ledger-card-actions .ledger-link,
+.paper-card-actions .ledger-link {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+/* Undo banner — bottom-anchored, single line, no toast chrome */
+.ledger-undo {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 12px 18px;
+  background: var(--color-cream, #FDFAF2);
+  border: 1px solid rgba(30,42,74,0.25);
+  border-radius: 2px;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--color-ink);
+  box-shadow: 0 8px 24px -8px rgba(30,42,74,0.30);
+  animation: inkReveal 0.28s ease both;
+  max-width: calc(100vw - 32px);
+}
+.ledger-undo button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-ink);
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-ink);
+  padding: 0 0 1px;
+}
+.ledger-undo button:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+[data-theme="dark"] .ledger-undo {
+  background: #1E2A4A;
+  color: #F2E9D0;
+  border-color: rgba(242,233,208,0.25);
+}
+[data-theme="dark"] .ledger-undo button {
+  color: #F2E9D0;
+  border-bottom-color: #F2E9D0;
+}
