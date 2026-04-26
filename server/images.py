@@ -1,5 +1,5 @@
 import io
-from PIL import Image
+from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
 register_heif_opener()
@@ -11,6 +11,7 @@ MAX_EDGE = 2048
 def normalize_to_jpeg(raw: bytes) -> tuple[bytes, str]:
     """Open arbitrary supported image bytes, downscale longest edge to 2048, return JPEG bytes."""
     img = Image.open(io.BytesIO(raw))
+    img = ImageOps.exif_transpose(img)
     if img.mode != "RGB":
         img = img.convert("RGB")
     w, h = img.size
