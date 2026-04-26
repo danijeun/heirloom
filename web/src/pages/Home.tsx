@@ -4,6 +4,7 @@ import { uploadImage } from "../api";
 import { recordAnonymousArtifact, useMe } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
+import { TextBackground } from "../components/TextBackground";
 
 export function Home() {
   const nav = useNavigate();
@@ -28,6 +29,7 @@ export function Home() {
     <>
       <Nav canGoBack={false} />
       <Particles />
+      <TextBackground />
       <div className="app">
         <h1>Heirloom</h1>
         <p className="tagline">A living dictionary for dying family languages. Humans create. Claude preserves.</p>
