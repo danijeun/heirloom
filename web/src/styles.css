@@ -916,7 +916,6 @@ body {
   padding: var(--space-md) var(--space-xl);
   position: relative;
   z-index: 1;
-  animation: fadeInUp 0.8s ease-out;
 }
 
 .header-with-badge {
@@ -924,6 +923,7 @@ body {
   gap: var(--space-md);
   align-items: flex-start;
   margin-bottom: -8px;
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .header-with-badge .badge {
@@ -976,10 +976,15 @@ body {
   margin-bottom: var(--space-lg);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
 .card.error {
   color: #a02525;
+}
+
+.closing-text {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
 .muted {
