@@ -452,7 +452,9 @@ body {
   color: inherit;
   background: transparent;
   transition: color 0.18s ease, text-decoration-color 0.18s ease;
-  user-select: text;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   position: relative;
   border: none;
   outline: none;
