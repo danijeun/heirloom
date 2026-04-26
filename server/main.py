@@ -189,10 +189,16 @@ async def create_artifact(
     with db.conn() as c:
         c.execute(
             text(
-                """INSERT INTO artifacts (id, created_at, status, owner_user_id)
-                   VALUES (:id, :created_at, 'pending', :owner)"""
+                """INSERT INTO artifacts (id, created_at, status, owner_user_id, image_url, image_content)
+                   VALUES (:id, :created_at, 'pending', :owner, :image_url, :image_content)"""
             ),
-            {"id": artifact_id, "created_at": now, "owner": owner_user_id},
+            {
+                "id": artifact_id,
+                "created_at": now,
+                "owner": owner_user_id,
+                "image_url": f"/api/artifacts/{artifact_id}/image",
+                "image_content": jpeg,
+            },
         )
 
     try:
@@ -333,6 +339,7 @@ def get_artifact(artifact_id: str):
 
     return {
         "id": row["id"], "status": row["status"], "error": row["error_message"],
+        "image_url": row["image_url"] or f"/api/artifacts/{artifact_id}/image",
         "transcription_text": row["transcription_text"] or "",
         "translation_text": row["translation_text"] or "",
         "original_language_guess": row["original_language_guess"] or "",
@@ -344,6 +351,18 @@ def get_artifact(artifact_id: str):
             for s in spans_rows
         ],
     }
+
+
+@app.get("/api/artifacts/{artifact_id}/image")
+def get_artifact_image(artifact_id: str):
+    with db.conn() as c:
+        row = c.execute(
+            text("SELECT image_content FROM artifacts WHERE id=:id"),
+            {"id": artifact_id},
+        ).mappings().fetchone()
+        if not row or row["image_content"] is None:
+            raise HTTPException(404, "Artifact image not found")
+    return Response(content=bytes(row["image_content"]), media_type="image/jpeg")
 
 
 def _parse_meaning_options(raw: str | None) -> list[dict]:

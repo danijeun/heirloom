@@ -27,6 +27,7 @@ export const Artifact = z.object({
   id: z.string(),
   status: z.enum(["pending", "ready", "failed"]),
   error: z.string().nullable().optional(),
+  image_url: z.string().optional().default(""),
   transcription_text: z.string(),
   translation_text: z.string(),
   original_language_guess: z.string(),

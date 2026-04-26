@@ -60,6 +60,7 @@ artifacts = Table(
     Column("id", Text, primary_key=True),
     Column("created_at", Integer, nullable=False),
     Column("image_url", Text),
+    Column("image_content", LargeBinary),
     Column("original_language_guess", Text),
     Column("transcription_text", Text),
     Column("translation_text", Text),
@@ -136,6 +137,7 @@ def init_db() -> None:
         _ensure_audio_content_column(conn)
         _ensure_span_meaning_options_column(conn)
         _ensure_artifact_owner_column(conn)
+        _ensure_artifact_image_content_column(conn)
         conn.exec_driver_sql(
             "CREATE INDEX IF NOT EXISTS idx_artifacts_owner ON artifacts(owner_user_id)"
         )
@@ -156,11 +158,21 @@ def _ensure_span_meaning_options_column(conn) -> None:
     column_names = {col["name"] for col in inspector.get_columns("spans")}
     if "meaning_options" not in column_names:
         conn.exec_driver_sql("ALTER TABLE spans ADD COLUMN meaning_options TEXT")
+
+
 def _ensure_artifact_owner_column(conn) -> None:
     inspector = inspect(conn)
     column_names = {col["name"] for col in inspector.get_columns("artifacts")}
     if "owner_user_id" not in column_names:
         conn.exec_driver_sql("ALTER TABLE artifacts ADD COLUMN owner_user_id TEXT")
+
+
+def _ensure_artifact_image_content_column(conn) -> None:
+    inspector = inspect(conn)
+    column_names = {col["name"] for col in inspector.get_columns("artifacts")}
+    if "image_content" not in column_names:
+        binary_type = "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
+        conn.exec_driver_sql(f"ALTER TABLE artifacts ADD COLUMN image_content {binary_type}")
 
 
 @contextmanager
