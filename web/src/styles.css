@@ -105,6 +105,16 @@ body {
   100% { transform: scale(1);    opacity: 1; }
 }
 
+@keyframes scrollLeftToRight {
+  0%   { transform: translateX(-100vw); }
+  100% { transform: translateX(100vw); }
+}
+
+@keyframes scrollRightToLeft {
+  0%   { transform: translateX(100vw); }
+  100% { transform: translateX(-100vw); }
+}
+
 /* ─────────────────────────────────────────────────────────────
    TEXT BACKGROUND (decorative centered text)
 ───────────────────────────────────────────────────────────── */
@@ -142,34 +152,86 @@ body {
   justify-content: center;
 }
 
-.text-background-left .text-background-item:nth-child(1),
-.text-background-right .text-background-item:nth-child(1) {
-  top: 25%;
-  left: 50%;
-  transform: translateX(-50%);
+.text-background-single {
+  position: fixed;
+  top: 20vh;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.text-background-left .text-background-item:nth-child(2),
-.text-background-right .text-background-item:nth-child(2) {
-  top: 27%;
+.text-background-single img {
+  width: auto;
+  height: 150px;
+  object-fit: contain;
+  opacity: 0.3;
+}
+
+.text-background-center {
+  position: fixed;
+  top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.text-background-center img {
+  position: absolute;
+  width: auto;
+  height: 550px;
+  object-fit: contain;
+}
+
+.text-background-light {
+  opacity: 0.35;
+  top: -100px !important;
+  left: -500px !important;
+  height: 180px !important;
+  z-index: 1000 !important;
+}
+
+[data-theme="dark"] .text-background-light {
+  opacity: 0;
+}
+
+.text-background-dark {
+  opacity: 0;
+  top: -100px !important;
+  left: -500px !important;
+  height: 180px !important;
+  z-index: 1000 !important;
+}
+
+[data-theme="dark"] .text-background-dark {
+  opacity: 0.35;
+}
+
+
+.text-background-left .text-background-item:nth-child(1) {
+  top: 9vh;
+  left: 20vw;
+  transform: translateX(-50%);
+  opacity: 0.21;
+}
+
+.text-background-left .text-background-item:nth-child(2) {
+  top: 14vh;
+  left: 20vw;
   transform: translateX(-50%);
   opacity: 0.28;
 }
 
-.text-background-left .text-background-item:nth-child(3),
-.text-background-right .text-background-item:nth-child(3) {
-  top: 29%;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0.21;
-}
 
 .text-background-item img {
   width: auto;
   height: 550px;
   object-fit: contain;
   filter: blur(0.5px);
+}
+
+.text-background-right .text-background-item:nth-child(1) img {
+  height: 515px;
 }
 
 /* ─────────────────────────────────────────────────────────────
