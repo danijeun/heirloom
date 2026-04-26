@@ -990,7 +990,7 @@ body {
 .symbol-container {
   display: flex;
   justify-content: center;
-  margin-top: var(--space-lg);
+  margin-top: var(--space-sm);
   animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
