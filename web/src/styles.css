@@ -2510,3 +2510,198 @@ body:has(.library-page--ledger) {
 [data-theme="dark"] .library-page--ledger .paper-card {
   border-color: rgba(242,233,208,0.18);
 }
+
+/* ── Image Movement Animations ──────────────────────────────── */
+@keyframes move-images-left {
+  0% {
+    transform: translate(-50%, -50%) translateX(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) translateX(-120vw);
+  }
+}
+
+@keyframes move-images-right {
+  0% {
+    transform: translate(-50%, -50%) translateX(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) translateX(120vw);
+  }
+}
+
+/* ── Dark Background Overlay ──────────────────────────────── */
+.dark-bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 10%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(150deg, #E6D4B8 0%, #D9C5A0 60%, #DCC9A8 100%);
+  z-index: -1;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+[data-theme="dark"] .dark-bg-overlay {
+  background: radial-gradient(ellipse at 30% 15%, #141030 0%, #07050a 45%, #0a0603 100%);
+}
+
+/* ── Center Image Text1 ──────────────────────────────────────── */
+.center-image {
+  position: fixed;
+  top: 55%;
+  left: 40%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-left 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+.center-image-right {
+  position: fixed;
+  top: 55%;
+  left: 160%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-left 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-right img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+.center-image-dark {
+  position: fixed;
+  top: 55%;
+  left: 40%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-left 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-dark img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+.center-image-right-dark {
+  position: fixed;
+  top: 55%;
+  left: 160%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-left 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-right-dark img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+[data-theme="dark"] .center-image,
+[data-theme="dark"] .center-image-right {
+  opacity: 0;
+}
+
+[data-theme="dark"] .center-image-dark,
+[data-theme="dark"] .center-image-right-dark {
+  opacity: 0.30;
+}
+
+/* ── Center Image Text3 ──────────────────────────────────────── */
+.center-image-text3 {
+  position: fixed;
+  top: 60.5%;
+  left: 80%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-right 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-text3 img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+.center-image-text3-right {
+  position: fixed;
+  top: 60.5%;
+  left: -40%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-right 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-text3-right img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+.center-image-text3-dark {
+  position: fixed;
+  top: 60.5%;
+  left: 80%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-right 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-text3-dark img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+.center-image-text3-right-dark {
+  position: fixed;
+  top: 60.5%;
+  left: -40%;
+  z-index: -2;
+  pointer-events: none;
+  animation: move-images-right 32s linear infinite;
+  opacity: 0.30;
+}
+
+.center-image-text3-right-dark img {
+  max-width: 2000px;
+  height: auto;
+  display: block;
+  opacity: 0.30;
+}
+
+[data-theme="dark"] .center-image-text3,
+[data-theme="dark"] .center-image-text3-right {
+  opacity: 0;
+}
+
+[data-theme="dark"] .center-image-text3-dark,
+[data-theme="dark"] .center-image-text3-right-dark {
+  opacity: 0.30;
+}
