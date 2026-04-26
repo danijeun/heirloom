@@ -921,6 +921,10 @@ body {
   margin-top: var(--space-md);
 }
 
+.header-with-badge > div {
+  margin-top: var(--space-md);
+}
+
 .badge-dark {
   display: none;
 }
