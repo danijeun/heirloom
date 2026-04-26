@@ -20,9 +20,21 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "/data/heirloom.db")
 
 
+def _normalize_database_url(url: str) -> str:
+    if url.startswith("postgresql+"):
+        return url
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url
+
+
 def _build_engine():
     if DATABASE_URL:
-        return create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+        return create_engine(
+            _normalize_database_url(DATABASE_URL), future=True, pool_pre_ping=True
+        )
 
     Path(DATABASE_PATH).parent.mkdir(parents=True, exist_ok=True)
     return create_engine(f"sqlite:///{DATABASE_PATH}", future=True)
