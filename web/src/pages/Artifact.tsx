@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArtifactT, SpanT } from "../api";
 import { getArtifact, uploadAudio } from "../api";
-import { useMe } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 import { SpanToken } from "../components/SpanToken";
