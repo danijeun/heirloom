@@ -144,14 +144,14 @@ body {
 
 .text-background-left .text-background-item:nth-child(1),
 .text-background-right .text-background-item:nth-child(1) {
-  top: 48%;
+  top: 25%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .text-background-left .text-background-item:nth-child(2),
 .text-background-right .text-background-item:nth-child(2) {
-  top: 50%;
+  top: 27%;
   left: 50%;
   transform: translateX(-50%);
   opacity: 0.28;
@@ -159,7 +159,7 @@ body {
 
 .text-background-left .text-background-item:nth-child(3),
 .text-background-right .text-background-item:nth-child(3) {
-  top: 52%;
+  top: 29%;
   left: 50%;
   transform: translateX(-50%);
   opacity: 0.21;
@@ -167,7 +167,7 @@ body {
 
 .text-background-item img {
   width: auto;
-  height: 400px;
+  height: 550px;
   object-fit: contain;
   filter: blur(0.5px);
 }
