@@ -85,8 +85,20 @@ export function Home() {
               disabled={busy}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
             />
-            <span style={{ fontSize: 22 }}>{busy ? "Uploading…" : "Tap to take or choose a photo"}</span>
-            <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
+            {busy ? (
+              <div className="loader">
+                <div className="pencil">
+                  <div className="pencil-body"></div>
+                  <div className="pencil-eraser"></div>
+                </div>
+                <div className="line"></div>
+              </div>
+            ) : (
+              <>
+                <span style={{ fontSize: 22 }}>Tap to take or choose a photo</span>
+                <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
+              </>
+            )}
           </label>
           {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
         </div>

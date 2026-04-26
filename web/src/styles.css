@@ -135,6 +135,71 @@ body {
   }
 }
 
+@keyframes draw {
+  0% { transform: translateX(0) rotate(-20deg); }
+  50% { transform: translateX(150px) rotate(-20deg); }
+  100% { transform: translateX(0) rotate(-20deg); }
+}
+
+@keyframes line-grow {
+  0% { width: 0; }
+  50% { width: 150px; }
+  100% { width: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LOADER (Pencil drawing animation)
+───────────────────────────────────────────────────────────── */
+.loader {
+  position: relative;
+  width: 200px;
+  height: 100px;
+  margin: 0 auto;
+}
+
+.pencil {
+  position: absolute;
+  width: 50px;
+  height: 10px;
+  background: #ffcc00;
+  bottom: 0;
+  left: 0;
+  transform-origin: left center;
+  animation: draw 2s infinite linear;
+}
+
+.pencil::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 0;
+  border-right: 10px solid #d2b48c;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.pencil-body {
+  width: 100%;
+  height: 100%;
+}
+
+.pencil-eraser {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 0;
+  height: 100%;
+}
+
+.line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-ink);
+  animation: line-grow 2s infinite linear;
+}
+
 /* ─────────────────────────────────────────────────────────────
    TEXT BACKGROUND (decorative centered text)
 ───────────────────────────────────────────────────────────── */
