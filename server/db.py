@@ -69,6 +69,7 @@ spans = Table(
     Column("end_char", Integer, nullable=False),
     Column("text", Text, nullable=False),
     Column("is_uncertain", Integer, nullable=False, server_default=text("0")),
+    Column("meaning_options", Text),
 )
 
 audio_clips = Table(
@@ -122,6 +123,7 @@ def init_db() -> None:
             "CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)"
         )
         _ensure_audio_content_column(conn)
+        _ensure_span_meaning_options_column(conn)
         _ensure_artifact_owner_column(conn)
         conn.exec_driver_sql(
             "CREATE INDEX IF NOT EXISTS idx_artifacts_owner ON artifacts(owner_user_id)"
@@ -138,6 +140,11 @@ def _ensure_audio_content_column(conn) -> None:
         conn.exec_driver_sql("ALTER TABLE audio_clips ADD COLUMN file_path TEXT")
 
 
+def _ensure_span_meaning_options_column(conn) -> None:
+    inspector = inspect(conn)
+    column_names = {col["name"] for col in inspector.get_columns("spans")}
+    if "meaning_options" not in column_names:
+        conn.exec_driver_sql("ALTER TABLE spans ADD COLUMN meaning_options TEXT")
 def _ensure_artifact_owner_column(conn) -> None:
     inspector = inspect(conn)
     column_names = {col["name"] for col in inspector.get_columns("artifacts")}

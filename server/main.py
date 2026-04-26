@@ -2,6 +2,7 @@ import logging
 import os
 import secrets
 import time
+import json
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -235,10 +236,11 @@ async def create_artifact(
                 start, end = int(span.get("start", 0)), int(span.get("end", 0))
                 if end <= start or start < 0 or end > len(transcription):
                     continue
+                meaning_options = span.get("meaning_options") or []
                 c.execute(
                     text(
-                        """INSERT INTO spans (id, artifact_id, start_char, end_char, text, is_uncertain)
-                           VALUES (:id, :artifact_id, :start_char, :end_char, :text, 1)"""
+                        """INSERT INTO spans (id, artifact_id, start_char, end_char, text, is_uncertain, meaning_options)
+                           VALUES (:id, :artifact_id, :start_char, :end_char, :text, 1, :meaning_options)"""
                     ),
                     {
                         "id": secrets.token_hex(8),
@@ -246,6 +248,7 @@ async def create_artifact(
                         "start_char": start,
                         "end_char": end,
                         "text": transcription[start:end],
+                        "meaning_options": json.dumps(meaning_options),
                     },
                 )
     except Exception as e:
@@ -269,7 +272,13 @@ def demo_artifact():
         "translation_text": "Grandmother's recipe.\nCorn, lard, and a bit of panela (raw cane sugar).",
         "original_language_guess": "Spanish (regional)",
         "spans": [{"id": "demo-s1", "start_char": 41, "end_char": 47,
-                   "text": "panela", "is_uncertain": True, "audio_clips": []}],
+                   "text": "panela", "is_uncertain": True,
+                   "meaning_options": [
+                       {"word": "panela", "meaning": "raw cane sugar formed in cakes"},
+                       {"word": "piloncillo", "meaning": "unrefined brown sugar in cone or block form"},
+                       {"word": "rapadura", "meaning": "solid evaporated cane juice sweetener"},
+                   ],
+                   "audio_clips": []}],
     }
 
 
@@ -307,10 +316,36 @@ def get_artifact(artifact_id: str):
         "spans": [
             {"id": s["id"], "start_char": s["start_char"], "end_char": s["end_char"],
              "text": s["text"], "is_uncertain": bool(s["is_uncertain"]),
+             "meaning_options": _parse_meaning_options_for_span(s["text"], s.get("meaning_options")),
              "audio_clips": clips_by_span.get(s["id"], [])}
             for s in spans_rows
         ],
     }
+
+
+def _parse_meaning_options(raw: str | None) -> list[dict]:
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    out: list[dict] = []
+    for option in data:
+        if not isinstance(option, dict):
+            continue
+        word = str(option.get("word") or "").strip()
+        meaning = str(option.get("meaning") or "").strip()
+        if word and meaning:
+            out.append({"word": word, "meaning": meaning})
+    return out[:3]
+
+
+def _parse_meaning_options_for_span(span_text: str, raw: str | None) -> list[dict]:
+    parsed = _parse_meaning_options(raw)
+    return [{"word": span_text, "meaning": option["meaning"]} for option in parsed]
 
 
 @app.post("/api/artifacts/{artifact_id}/spans")
