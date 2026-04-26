@@ -147,7 +147,7 @@ body {
 }
 
 .text-background-left .text-background-item:nth-child(1) {
-  top: 15%;
+  top: 48%;
 }
 
 .text-background-left .text-background-item:nth-child(2) {
@@ -156,12 +156,12 @@ body {
 }
 
 .text-background-left .text-background-item:nth-child(3) {
-  top: 57%;
+  top: 52%;
   opacity: 0.21;
 }
 
 .text-background-right .text-background-item:nth-child(1) {
-  top: 15%;
+  top: 48%;
 }
 
 .text-background-right .text-background-item:nth-child(2) {
@@ -170,7 +170,7 @@ body {
 }
 
 .text-background-right .text-background-item:nth-child(3) {
-  top: 57%;
+  top: 52%;
   opacity: 0.21;
 }
 
