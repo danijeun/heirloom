@@ -5,15 +5,17 @@ import time
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import Body, Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import bindparam, text
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.sessions import SessionMiddleware
 
 load_dotenv()
 
-from . import db, pricing, rate_limit
+from . import auth, db, pricing, rate_limit
+from .auth import get_current_user, require_user
 from .claude_client import transcribe_image
 from .images import ACCEPTED_MIME, normalize_to_jpeg
 
@@ -27,6 +29,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("heirloom")
 
 app = FastAPI(title="Heirloom")
+
+# Authlib needs a Starlette session for OAuth state during the redirect dance.
+# This is NOT the user session; it's a short-lived signed cookie holding
+# `state` + `nonce` between /auth/google/login and /auth/google/callback.
+_session_secret = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=_session_secret,
+    session_cookie="heirloom_oauth_state",
+    max_age=600,  # 10 minutes; the OAuth dance takes seconds
+    same_site="lax",
+    https_only=auth.COOKIE_SECURE,
+)
 
 
 @app.on_event("startup")
@@ -61,6 +76,79 @@ def _client_ip(request: Request) -> str:
     return fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown")
 
 
+# --- Auth routes ------------------------------------------------------------
+
+@app.get("/auth/google/login")
+async def auth_google_login(request: Request):
+    return await auth.google_login(request)
+
+
+@app.get("/auth/google/callback")
+async def auth_google_callback(request: Request):
+    return await auth.google_callback(request)
+
+
+@app.post("/auth/logout")
+def auth_logout(request: Request):
+    return auth.logout(request)
+
+
+@app.get("/api/me")
+def api_me(user=Depends(get_current_user)):
+    return {
+        "user": user,
+        "anonymous": user is None,
+        "google_configured": auth.is_configured(),
+    }
+
+
+@app.get("/api/me/artifacts")
+def api_me_artifacts(user=Depends(require_user)):
+    with db.conn() as c:
+        rows = c.execute(
+            text(
+                """SELECT id, status, created_at, original_language_guess,
+                          transcription_text, translation_text
+                   FROM artifacts WHERE owner_user_id = :uid
+                   ORDER BY created_at DESC LIMIT 200"""
+            ),
+            {"uid": user["id"]},
+        ).mappings().fetchall()
+    return {
+        "artifacts": [
+            {
+                "id": r["id"],
+                "status": r["status"],
+                "created_at": r["created_at"],
+                "original_language_guess": r["original_language_guess"] or "",
+                "transcription_preview": (r["transcription_text"] or "")[:140],
+                "has_translation": bool(r["translation_text"]),
+            }
+            for r in rows
+        ]
+    }
+
+
+@app.post("/api/me/claim")
+def api_me_claim(payload: dict = Body(...), user=Depends(require_user)):
+    """Idempotently claim previously-anonymous artifacts. Only sets owner_user_id
+    on rows where it is currently NULL; defends shared-device users from each other."""
+    raw_ids = payload.get("artifact_ids") or []
+    if not isinstance(raw_ids, list):
+        raise HTTPException(400, "artifact_ids must be a list of strings")
+    artifact_ids = [str(x) for x in raw_ids if isinstance(x, str) and x][:500]
+    if not artifact_ids:
+        return {"claimed": 0, "skipped": 0}
+    with db.conn() as c:
+        stmt = text(
+            "UPDATE artifacts SET owner_user_id = :uid "
+            "WHERE owner_user_id IS NULL AND id IN :ids"
+        ).bindparams(bindparam("ids", expanding=True))
+        result = c.execute(stmt, {"uid": user["id"], "ids": artifact_ids})
+        claimed = result.rowcount or 0
+    return {"claimed": claimed, "skipped": len(artifact_ids) - claimed}
+
+
 @app.get("/health")
 def health():
     try:
@@ -72,7 +160,11 @@ def health():
 
 
 @app.post("/api/artifacts")
-async def create_artifact(request: Request, image: UploadFile = File(...)):
+async def create_artifact(
+    request: Request,
+    image: UploadFile = File(...),
+    user=Depends(get_current_user),
+):
     ip = _client_ip(request)
     if not rate_limit.allow(ip):
         raise HTTPException(429, "Rate limit exceeded (per hour)")
@@ -91,10 +183,14 @@ async def create_artifact(request: Request, image: UploadFile = File(...)):
 
     artifact_id = secrets.token_hex(16)
     now = int(time.time())
+    owner_user_id = user["id"] if user else None
     with db.conn() as c:
         c.execute(
-            text("INSERT INTO artifacts (id, created_at, status) VALUES (:id, :created_at, 'pending')"),
-            {"id": artifact_id, "created_at": now},
+            text(
+                """INSERT INTO artifacts (id, created_at, status, owner_user_id)
+                   VALUES (:id, :created_at, 'pending', :owner)"""
+            ),
+            {"id": artifact_id, "created_at": now, "owner": owner_user_id},
         )
 
     try:
