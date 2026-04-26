@@ -911,7 +911,7 @@ body {
   display: flex;
   gap: var(--space-md);
   align-items: flex-start;
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-sm);
 }
 
 .header-with-badge .badge {
