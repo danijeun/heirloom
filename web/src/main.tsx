@@ -6,6 +6,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { Home } from "./pages/Home";
 import { Artifact } from "./pages/Artifact";
 import { Mine } from "./pages/Mine";
+import { Footer } from "./components/Footer";
 import { useClaimOnLogin } from "./auth";
 import "./styles.css";
 
@@ -21,6 +22,7 @@ function App() {
         <Route path="/artifact/:id" element={<Artifact />} />
         <Route path="/mine" element={<Mine />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   );
 }
