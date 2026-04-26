@@ -909,13 +909,13 @@ body {
 
 .header-with-badge {
   display: flex;
-  gap: var(--space-xl);
+  gap: var(--space-md);
   align-items: flex-start;
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-lg);
 }
 
 .header-with-badge .badge {
-  width: 120px;
+  width: 80px;
   height: auto;
   flex-shrink: 0;
 }
