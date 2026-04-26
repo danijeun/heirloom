@@ -22,11 +22,9 @@ RUN pip install --no-cache-dir -r server/requirements.txt
 COPY server/ ./server/
 COPY --from=web-builder /web/dist ./web/dist
 
-# Set default environment variables
-ENV PORT=8000 \
-    PYTHONUNBUFFERED=1 \
-    DATABASE_PATH=/data/heirloom.db
+# Keep the runtime unbuffered; Railway injects app env like PORT and DATABASE_URL.
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn server.main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
