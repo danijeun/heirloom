@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMyArtifacts, useMe, type MyArtifactRow } from "../auth";
+import { fetchMyArtifacts, useMe } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 import { PaperStack } from "../components/PaperStack";
@@ -9,12 +9,6 @@ import { PaperStack } from "../components/PaperStack";
 type Mode = "stack" | "grid";
 const MODE_KEY = "heirloom_mine_mode";
 const INDEX_KEY = "heirloom_mine_index";
-
-const STATUS_LABEL: Record<MyArtifactRow["status"], string> = {
-  ready: "Ready",
-  pending: "Reading…",
-  failed: "Needs retry",
-};
 
 function truncate(s: string, n: number): string {
   if (!s) return "";
@@ -27,6 +21,10 @@ function formatDate(unixSec: number): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function entryNo(i: number): string {
+  return "No. " + String(i + 1).padStart(3, "0");
 }
 
 export function Mine() {
@@ -67,56 +65,44 @@ export function Mine() {
     try { sessionStorage.setItem(INDEX_KEY, String(i)); } catch {}
   };
 
-  // ─── Loading the session ──────────────────────────────────
+  // Loading the session
   if (me.isLoading) {
     return (
       <>
         <Nav canGoBack={false} />
         <Particles />
-        <main className="library-page">
-          <header className="library-header">
-            <div className="library-header-text">
-              <p className="library-eyebrow">— Personal archive —</p>
-              <h1 className="library-title">Your Library</h1>
-              <p className="library-subtitle">gathering heirlooms…</p>
-            </div>
+        <main className="library-page library-page--ledger">
+          <header className="ledger-header">
+            <h1 className="ledger-title">Archive</h1>
+            <p className="ledger-meta">Opening.</p>
           </header>
-          <hr className="ornament-divider" aria-hidden="true" />
-          <section className="library-grid" aria-busy="true" aria-label="Loading library">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="library-card library-card--skeleton" aria-hidden="true">
-                <div className="library-skel-line library-skel-line--meta" />
-                <div className="library-skel-line library-skel-line--title" />
-                <div className="library-skel-line library-skel-line--meta" />
-                <div className="library-skel-line library-skel-line--body" />
-                <div className="library-skel-line library-skel-line--body short" />
-              </div>
-            ))}
-          </section>
+          <div className="ledger-rule" aria-hidden="true" />
         </main>
       </>
     );
   }
 
-  // ─── Signed out ────────────────────────────────────────────
+  // Signed out
   if (!me.data?.user) {
     return (
       <>
         <Nav canGoBack={false} />
         <Particles />
-        <main className="library-page">
-          <div className="library-empty library-empty--auth">
-            <p className="library-empty-eyebrow">— Restricted —</p>
-            <h1 className="library-empty-title">Your library is sealed</h1>
-            <p className="library-empty-body">
+        <main className="library-page library-page--ledger">
+          <header className="ledger-header">
+            <h1 className="ledger-title">Archive</h1>
+            <p className="ledger-meta">Sealed.</p>
+          </header>
+          <div className="ledger-rule" aria-hidden="true" />
+          <div className="ledger-empty">
+            <p className="ledger-empty-body">
               Heirloom keeps every scan and recording private to you. Sign in with Google
-              to revisit your archive from any device — and to bring along anything you
-              made before signing in.
+              to read your archive from any device, and bring along anything you made
+              before signing in.
             </p>
             {me.data?.google_configured ? (
-              <a href="/auth/google/login" className="library-cta library-cta--center">
-                <span className="library-cta-glyph" aria-hidden="true">✶</span>
-                <span>Sign in with Google</span>
+              <a href="/auth/google/login" className="ledger-link ledger-link--strong">
+                Sign in with Google
               </a>
             ) : (
               <p className="error">Google sign-in is not configured on this server.</p>
@@ -127,71 +113,60 @@ export function Mine() {
     );
   }
 
-  // ─── Signed in ─────────────────────────────────────────────
+  // Signed in
   const items = list.data ?? [];
   const count = items.length;
-  const subtitle =
-    list.isLoading
-      ? "opening the archive…"
-      : count === 0
-      ? "an empty page, awaiting your first mark"
-      : count === 1
-      ? "1 heirloom gathered"
-      : `${count} heirlooms gathered`;
+  const metaLine =
+    list.isLoading ? "Opening."
+    : count === 0  ? "Empty."
+    : count === 1  ? "1 entry."
+    : `${count} entries.`;
 
   return (
     <>
       <Nav canGoBack={false} />
       <Particles />
-      <main className="library-page">
-        <header className="library-header">
-          <div className="library-header-text">
-            <p className="library-eyebrow">— Personal archive —</p>
-            <h1 className="library-title">Your Library</h1>
-            <p className="library-subtitle">{subtitle}</p>
+      <main className="library-page library-page--ledger">
+        <header className="ledger-header">
+          <div>
+            <h1 className="ledger-title">Archive</h1>
+            <p className="ledger-meta">Your archive. {metaLine}</p>
           </div>
-          <Link to="/" className="library-cta" aria-label="Scan a new artifact">
-            <span className="library-cta-glyph" aria-hidden="true">✒</span>
-            <span>Scan a new artifact</span>
+          <Link to="/" className="ledger-link" aria-label="Add a new entry">
+            Add entry
           </Link>
         </header>
 
-        <hr className="ornament-divider" aria-hidden="true" />
+        <div className="ledger-rule" aria-hidden="true" />
 
         {count === 0 && !list.isLoading && (
-          <div className="library-empty">
-            <p className="library-empty-eyebrow">— Begin —</p>
-            <h2 className="library-empty-title">Your shelf is bare</h2>
-            <p className="library-empty-body">
-              Every archive starts with a single scrap. A recipe card, a margin note,
-              a postcard whose handwriting nobody quite reads anymore. Photograph it.
-              The rest follows.
+          <div className="ledger-empty">
+            <p className="ledger-empty-body">
+              An archive starts with one scrap. A recipe card, a margin note, a
+              postcard whose handwriting nobody quite reads anymore. Photograph it
+              and the rest follows.
             </p>
-            <Link to="/" className="library-cta library-cta--center">
-              <span className="library-cta-glyph" aria-hidden="true">✒</span>
-              <span>Scan your first artifact</span>
-            </Link>
+            <Link to="/" className="ledger-link ledger-link--strong">Scan your first entry</Link>
           </div>
         )}
 
         {count > 0 && (
           <>
-            <div className="paper-mode-toggle" role="tablist" aria-label="View mode">
+            <nav className="ledger-views" aria-label="View">
               <button
                 type="button"
-                role="tab"
-                aria-selected={mode === "stack"}
-                className={mode === "stack" ? "is-active" : ""}
+                className={"ledger-view-link" + (mode === "stack" ? " is-active" : "")}
                 onClick={() => setMode("stack")}
+                aria-pressed={mode === "stack"}
               >Stack</button>
+              <span className="ledger-views-sep" aria-hidden="true">·</span>
               <button
                 type="button"
-                role="tab"
-                aria-selected={mode === "grid"}
-                className={mode === "grid" ? "is-active" : ""}
+                className={"ledger-view-link" + (mode === "grid" ? " is-active" : "")}
                 onClick={() => setMode("grid")}
-              >Browse all</button>
-            </div>
+                aria-pressed={mode === "grid"}
+              >Index</button>
+            </nav>
 
             {mode === "stack" ? (
               <PaperStack
@@ -201,38 +176,23 @@ export function Mine() {
                 onOpen={(id) => navigate(`/artifact/${id}`)}
               />
             ) : (
-              <section className="library-grid" aria-label="Saved artifacts">
+              <section className="ledger-grid" aria-label="Index">
                 {items.map((a, idx) => (
-                  <Link
-                    to={`/artifact/${a.id}`}
-                    key={a.id}
-                    className="library-card"
-                    style={{ animationDelay: `${Math.min(idx * 55, 600)}ms` }}
-                  >
-                    <span
-                      className={`library-status library-status--${a.status}`}
-                      aria-label={`Status: ${STATUS_LABEL[a.status]}`}
-                    >
-                      <span className="library-status-dot" aria-hidden="true" />
-                      {STATUS_LABEL[a.status]}
-                    </span>
-                    <h3 className="library-card-title">
+                  <Link to={`/artifact/${a.id}`} key={a.id} className="ledger-card">
+                    <div className="ledger-card-no">{entryNo(idx)}</div>
+                    <h3 className="ledger-card-title">
                       {a.original_language_guess || "Untitled fragment"}
                     </h3>
+                    <div className="ledger-card-rule" aria-hidden="true" />
                     <time
-                      className="library-card-date"
+                      className="ledger-card-date"
                       dateTime={new Date(a.created_at * 1000).toISOString()}
                     >
                       {formatDate(a.created_at)}
                     </time>
-                    <p className="library-card-preview">
-                      {truncate(a.transcription_preview, 90) || "(no transcription yet)"}
+                    <p className="ledger-card-preview">
+                      {truncate(a.transcription_preview, 110) || "(no transcription yet)"}
                     </p>
-                    {a.has_translation && (
-                      <span className="library-card-tag" aria-label="Translation available">
-                        ✦ Translated
-                      </span>
-                    )}
                   </Link>
                 ))}
               </section>

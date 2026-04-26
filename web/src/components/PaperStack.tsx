@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MyArtifactRow } from "../auth";
 
-const STATUS_LABEL: Record<MyArtifactRow["status"], string> = {
-  ready: "Ready",
-  pending: "Reading…",
-  failed: "Needs retry",
-};
-
 const SWIPE_THRESHOLD = 60;
 const TAP_SLOP = 6;
 const LIFT_MS = 220;
@@ -178,7 +172,7 @@ export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: P
               aria-hidden={!isTop}
               aria-label={
                 isTop
-                  ? `${item.original_language_guess || "Untitled fragment"}, ${formatDate(item.created_at)}, status: ${STATUS_LABEL[item.status]}. ${index + 1} of ${total}. Tap to open, swipe to browse.`
+                  ? `${item.original_language_guess || "Untitled fragment"}, ${formatDate(item.created_at)}. Entry ${index + 1} of ${total}. Tap to open, swipe to browse.`
                   : undefined
               }
               onPointerDown={isTop ? handlePointerDown : undefined}
@@ -188,22 +182,19 @@ export function PaperStack({ items, onOpen, initialIndex = 0, onIndexChange }: P
               onKeyDown={isTop ? handleKeyDown : undefined}
               disabled={!isTop && slot !== 1}
             >
-              <span className={`paper-status paper-status--${item.status}`}>
-                <span className="paper-status-dot" aria-hidden="true" />
-                {STATUS_LABEL[item.status]}
-              </span>
+              <div className="paper-card-no">
+                No. {String(sorted.indexOf(item) + 1).padStart(3, "0")}
+              </div>
               <h3 className="paper-card-title">
                 {item.original_language_guess || "Untitled fragment"}
               </h3>
+              <div className="paper-card-rule" aria-hidden="true" />
               <time className="paper-card-date" dateTime={new Date(item.created_at * 1000).toISOString()}>
                 {formatDate(item.created_at)}
               </time>
               <p className="paper-card-preview">
                 {truncate(item.transcription_preview, 140) || "(no transcription yet)"}
               </p>
-              {item.has_translation && (
-                <span className="paper-card-tag">✦ Translated</span>
-              )}
               <span className="paper-card-grain" aria-hidden="true" />
             </button>
           );

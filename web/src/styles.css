@@ -1959,3 +1959,317 @@ button, .btn, .span-token, .popup-btn, .popup-close {
   .paper-card--lifting,
   .paper-stack-hint { transition: none !important; animation: none !important; }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   LEDGER LAYOUT  — /mine reformat
+   Scoped overrides. Single typeface (Lora), no display/handwriting,
+   no purple, no rounded pills, no sparkles.
+───────────────────────────────────────────────────────────── */
+.library-page--ledger {
+  max-width: 940px;
+  padding: var(--space-2xl) var(--space-xl) var(--space-2xl);
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+}
+
+.ledger-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-md);
+}
+.ledger-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-style: normal;
+  font-size: clamp(40px, 5.4vw, 56px);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--color-ink);
+  margin: 0;
+}
+.ledger-meta {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--color-sepia);
+  letter-spacing: 0.02em;
+  margin-top: 8px;
+}
+
+.ledger-link {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--color-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-sepia);
+  padding-bottom: 1px;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+.ledger-link:hover { border-bottom-color: var(--color-ink); }
+.ledger-link:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}
+.ledger-link--strong {
+  font-weight: 600;
+  border-bottom-width: 2px;
+  border-bottom-color: var(--color-ink);
+}
+
+.ledger-rule {
+  height: 1px;
+  background: rgba(139,104,67,0.30);
+  margin: var(--space-md) 0 var(--space-xl);
+}
+
+.ledger-views {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: var(--space-lg);
+}
+.ledger-view-link {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-sepia);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+}
+.ledger-view-link.is-active {
+  color: var(--color-ink);
+  font-weight: 600;
+  border-bottom-color: var(--color-ink);
+}
+.ledger-view-link:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+.ledger-views-sep { color: var(--color-sepia); }
+
+.ledger-empty {
+  max-width: 540px;
+  margin: var(--space-2xl) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+.ledger-empty-body {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--color-ink-light);
+}
+
+/* ── Index grid — square paper, no tilt, paper-texture ───────── */
+.ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+.ledger-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 22px 24px;
+  border-radius: 2px;
+  background-color: var(--color-paper);
+  background-image:
+    url("./assets/paper-texture.png"),
+    linear-gradient(160deg,
+      var(--color-cream) 0%,
+      var(--color-paper) 60%,
+      var(--color-paper-mid) 100%);
+  background-size: cover, auto;
+  background-blend-mode: multiply, normal;
+  border: 1px solid rgba(139,104,67,0.22);
+  color: var(--color-ink);
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(60,40,20,0.10);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.ledger-card:hover {
+  border-color: var(--color-ink);
+  box-shadow: 0 6px 14px -4px rgba(60,40,20,0.22);
+  transform: translateY(-1px);
+}
+.ledger-card:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+.ledger-card-no {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-sepia);
+}
+.ledger-card-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--color-ink);
+  margin: 2px 0 4px;
+  text-wrap: pretty;
+}
+.ledger-card-rule {
+  height: 1px;
+  background: rgba(139,104,67,0.30);
+  margin: 2px 0 6px;
+}
+.ledger-card-date {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-sepia);
+}
+.ledger-card-preview {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-ink-light);
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Paper-stack card refresh — same ledger language ────────── */
+.library-page--ledger .paper-card {
+  border-radius: 2px;
+  background-image:
+    url("./assets/paper-texture.png"),
+    radial-gradient(circle at 18% 8%, rgba(255,255,255,0.45), transparent 38%),
+    linear-gradient(160deg,
+      var(--color-cream) 0%,
+      var(--color-paper) 55%,
+      var(--color-paper-mid) 100%);
+  background-size: cover, auto, auto;
+  background-blend-mode: multiply, normal, normal;
+  border: 1px solid rgba(139,104,67,0.22);
+  font-family: var(--font-serif);
+  padding: 32px 28px 30px;
+}
+.library-page--ledger .paper-card:focus-visible {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow:
+    0 0 0 2px rgba(44,24,16,0.20),
+    0 22px 38px -14px rgba(60,40,20,0.30);
+}
+.paper-card-no {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-sepia);
+  align-self: flex-start;
+}
+.library-page--ledger .paper-card-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(26px, 5.4vw, 34px);
+  line-height: 1.15;
+  color: var(--color-ink);
+  margin-top: 8px;
+}
+.paper-card-rule {
+  height: 1px;
+  background: rgba(139,104,67,0.30);
+  margin: 6px 0 4px;
+}
+.library-page--ledger .paper-card-date {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-sepia);
+}
+.library-page--ledger .paper-card-preview {
+  font-family: var(--font-serif);
+  font-style: normal;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-ink-light);
+}
+
+/* ── Stack controls in ledger style ─────────────────────────── */
+.library-page--ledger .paper-stack-counter {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--color-sepia);
+}
+.library-page--ledger .paper-stack-counter span { color: var(--color-sepia); }
+.library-page--ledger .paper-stack-dot { background: rgba(139,104,67,0.35); }
+.library-page--ledger .paper-stack-dot.is-active {
+  background: var(--color-ink);
+  transform: scale(1.2);
+}
+.library-page--ledger .paper-stack-dot:focus-visible {
+  outline: 2px solid var(--color-ink);
+}
+.library-page--ledger .paper-stack-tip {
+  font-family: var(--font-serif);
+  font-style: normal;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--color-sepia);
+  opacity: 0.85;
+}
+.library-page--ledger .paper-stack-hint-chev { color: var(--color-ink-light); }
+
+/* Header stacks on small screens */
+@media (max-width: 640px) {
+  .library-page--ledger { padding: var(--space-xl) var(--space-md); }
+  .ledger-header { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+}
+
+/* Dark theme ledger */
+[data-theme="dark"] .library-page--ledger { color: #F0DDB0; }
+[data-theme="dark"] .ledger-title { color: #F0DDB0; }
+[data-theme="dark"] .ledger-meta,
+[data-theme="dark"] .ledger-card-no,
+[data-theme="dark"] .ledger-card-date { color: #A88A5C; }
+[data-theme="dark"] .ledger-rule,
+[data-theme="dark"] .ledger-card-rule { background: rgba(168,138,92,0.30); }
+[data-theme="dark"] .ledger-link {
+  color: #F0DDB0;
+  border-bottom-color: #A88A5C;
+}
+[data-theme="dark"] .ledger-link:hover { border-bottom-color: #F0DDB0; }
+[data-theme="dark"] .ledger-view-link { color: #A88A5C; }
+[data-theme="dark"] .ledger-view-link.is-active {
+  color: #F0DDB0;
+  border-bottom-color: #F0DDB0;
+}
+[data-theme="dark"] .ledger-card {
+  background-image:
+    url("./assets/paper-texture.png"),
+    linear-gradient(160deg, #3A2818 0%, #2C1810 60%, #241208 100%);
+  border-color: rgba(168,138,92,0.30);
+  color: #F0DDB0;
+}
+[data-theme="dark"] .ledger-card-title { color: #F0DDB0; }
+[data-theme="dark"] .ledger-card-preview { color: #C9B58A; }
