@@ -2,11 +2,11 @@
 
 A living dictionary for dying family languages. Humans create. Claude preserves.
 
-Built for the Claude Builder Club Spring 2026 Hackathon @ NJIT — Track: Creative Flourishing.
+Built for the Claude Builder Club Spring 2026 Hackathon @ NJIT, Track: Creative Flourishing.
 
 ## Golden path
 
-Upload a photo of a handwritten artifact → Claude transcribes + drafts a translation, flags uncertain words → an elder taps any span and records a voice clip → share one public page with scan + text + audio.
+Upload a photo of a handwritten artifact -> Claude transcribes and drafts a translation, flags uncertain words -> an elder taps any span and records a voice clip -> share one public page with scan, text, and audio.
 
 ## Local dev
 
@@ -18,7 +18,6 @@ cd server
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export $(grep -v '^#' ../.env | xargs)
-export DATABASE_PATH=$PWD/../data/heirloom.db AUDIO_DIR=$PWD/../data/audio
 uvicorn server.main:app --reload --port 8000
 ```
 
@@ -34,36 +33,38 @@ npm run dev
 
 The Vite dev server proxies `/api/*` to the FastAPI server on port 8000.
 
-## Production build (single container)
+For local SQLite fallback, set `DATABASE_PATH`. For Postgres, set `DATABASE_URL`.
+
+## Production build
 
 ```bash
 docker build -t heirloom .
 docker run --rm -p 8000:8000 \
   -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  -v $PWD/data:/data \
+  -e DATABASE_URL=$DATABASE_URL \
   heirloom
 ```
 
-## Deploy (Railway)
+## Deploy on Railway
 
-1. New service from this GitHub repo (Dockerfile auto-detected).
-2. Mount a 1 GB volume at `/data`.
-3. Env vars: `ANTHROPIC_API_KEY`, `HEIRLOOM_MAX_CALLS_PER_HOUR=60`, `HEIRLOOM_MAX_UPLOAD_MB=8`, `DATABASE_PATH=/data/heirloom.db`, `AUDIO_DIR=/data/audio`.
-4. Custom domain → HTTPS auto.
-
-`getUserMedia` and `MediaRecorder` are HTTPS-only on iOS Safari. Railway's HTTPS satisfies this in prod; for local mobile testing use Ngrok.
+1. Create a new Railway project from this GitHub repo.
+2. Add a PostgreSQL service in the same Railway project.
+3. In the app service, set `DATABASE_URL=${{Postgres.DATABASE_URL}}`.
+4. Set `ANTHROPIC_API_KEY`, `HEIRLOOM_MAX_CALLS_PER_HOUR=60`, `HEIRLOOM_MAX_UPLOAD_MB=8`, `HEIRLOOM_MAX_AUDIO_MB=4`, and `HEIRLOOM_MAX_AUDIO_SECONDS=60`.
+5. Do not mount a volume. Artifacts, spans, and uploaded audio are stored in SQL.
+6. Deploy. Railway HTTPS is enough for `getUserMedia` and `MediaRecorder` in production.
 
 ## Architecture
 
-Plain HTTP. SQLite. Local volume for audio. No WebSocket, no SSE.
+Plain HTTP. SQL database for artifacts, spans, and audio blobs. No WebSocket, no SSE.
 
-```
+```text
 artifacts (id, status, transcription_text, translation_text, ...)
 spans (id, artifact_id, start_char, end_char, text, is_uncertain)
-audio_clips (id, span_id, file_path, mime_type, duration_ms)
+audio_clips (id, span_id, content, mime_type, duration_ms)
 ```
 
-Audio attaches to **text spans in the transcript**, not to image coordinates — Claude's bounding boxes on handwritten low-resource scripts aren't reliable.
+Audio attaches to text spans in the transcript, not image coordinates.
 
 ## Demo fallback
 

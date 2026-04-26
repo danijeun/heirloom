@@ -16,11 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# --- CRITICAL FIX FOR VOLUMES ---
-# Create the /data directory at the root and give it full permissions
-# This acts as the "landing pad" for your Railway Volume
-RUN mkdir -p /data && chmod 777 /data
-
 COPY server/requirements.txt ./server/requirements.txt
 RUN pip install --no-cache-dir -r server/requirements.txt
 

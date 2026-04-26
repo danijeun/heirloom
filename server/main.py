@@ -6,8 +6,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import bindparam, text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 load_dotenv()
@@ -16,7 +17,7 @@ from . import db, pricing, rate_limit
 from .claude_client import transcribe_image
 from .images import ACCEPTED_MIME, normalize_to_jpeg
 
-AUDIO_DIR = Path(os.environ.get("AUDIO_DIR", "/data/audio"))
+AUDIO_DIR = Path(os.environ["AUDIO_DIR"]) if os.environ.get("AUDIO_DIR") else None
 MAX_UPLOAD_MB = int(os.environ.get("HEIRLOOM_MAX_UPLOAD_MB", "8"))
 MAX_AUDIO_MB = int(os.environ.get("HEIRLOOM_MAX_AUDIO_MB", "4"))
 MAX_AUDIO_S = int(os.environ.get("HEIRLOOM_MAX_AUDIO_SECONDS", "60"))
@@ -30,12 +31,15 @@ app = FastAPI(title="Heirloom")
 
 @app.on_event("startup")
 def _startup() -> None:
-    AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-    probe = AUDIO_DIR / ".write_probe"
-    probe.write_text("ok")
-    probe.unlink()
+    if AUDIO_DIR is not None:
+        AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     db.init_db()
-    log.info("startup ok db=%s audio=%s", db.DB_PATH, AUDIO_DIR)
+    log.info(
+        "startup ok database_url=%s database_path=%s audio_dir=%s",
+        bool(db.DATABASE_URL),
+        db.DATABASE_PATH,
+        AUDIO_DIR,
+    )
 
 
 @app.middleware("http")
@@ -61,9 +65,7 @@ def _client_ip(request: Request) -> str:
 def health():
     try:
         with db.conn() as c:
-            c.execute("SELECT 1").fetchone()
-        if not os.access(AUDIO_DIR, os.W_OK):
-            raise RuntimeError("audio dir not writable")
+            c.execute(text("SELECT 1")).fetchone()
         return {"ok": True}
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -91,8 +93,8 @@ async def create_artifact(request: Request, image: UploadFile = File(...)):
     now = int(time.time())
     with db.conn() as c:
         c.execute(
-            "INSERT INTO artifacts (id, created_at, status) VALUES (?, ?, 'pending')",
-            (artifact_id, now),
+            text("INSERT INTO artifacts (id, created_at, status) VALUES (:id, :created_at, 'pending')"),
+            {"id": artifact_id, "created_at": now},
         )
 
     try:
@@ -115,26 +117,47 @@ async def create_artifact(request: Request, image: UploadFile = File(...)):
 
         with db.conn() as c:
             c.execute(
-                """UPDATE artifacts SET status='ready', transcription_text=?, translation_text=?,
-                   original_language_guess=?, claude_model=?, input_tokens=?, output_tokens=?, cost_cents=?
-                   WHERE id=?""",
-                (transcription, translation, language, result["model"],
-                 result["input_tokens"], result["output_tokens"], cents, artifact_id),
+                text(
+                    """UPDATE artifacts
+                       SET status='ready', transcription_text=:transcription_text, translation_text=:translation_text,
+                           original_language_guess=:original_language_guess, claude_model=:claude_model,
+                           input_tokens=:input_tokens, output_tokens=:output_tokens, cost_cents=:cost_cents
+                       WHERE id=:id"""
+                ),
+                {
+                    "transcription_text": transcription,
+                    "translation_text": translation,
+                    "original_language_guess": language,
+                    "claude_model": result["model"],
+                    "input_tokens": result["input_tokens"],
+                    "output_tokens": result["output_tokens"],
+                    "cost_cents": cents,
+                    "id": artifact_id,
+                },
             )
             for span in uncertain:
                 start, end = int(span.get("start", 0)), int(span.get("end", 0))
                 if end <= start or start < 0 or end > len(transcription):
                     continue
                 c.execute(
-                    "INSERT INTO spans (id, artifact_id, start_char, end_char, text, is_uncertain) VALUES (?, ?, ?, ?, ?, 1)",
-                    (secrets.token_hex(8), artifact_id, start, end, transcription[start:end]),
+                    text(
+                        """INSERT INTO spans (id, artifact_id, start_char, end_char, text, is_uncertain)
+                           VALUES (:id, :artifact_id, :start_char, :end_char, :text, 1)"""
+                    ),
+                    {
+                        "id": secrets.token_hex(8),
+                        "artifact_id": artifact_id,
+                        "start_char": start,
+                        "end_char": end,
+                        "text": transcription[start:end],
+                    },
                 )
     except Exception as e:
         log.exception("artifact %s failed", artifact_id)
         with db.conn() as c:
             c.execute(
-                "UPDATE artifacts SET status='failed', error_message=? WHERE id=?",
-                (str(e)[:500], artifact_id),
+                text("UPDATE artifacts SET status='failed', error_message=:error_message WHERE id=:id"),
+                {"error_message": str(e)[:500], "id": artifact_id},
             )
 
     return {"id": artifact_id}
@@ -157,20 +180,23 @@ def demo_artifact():
 @app.get("/api/artifacts/{artifact_id}")
 def get_artifact(artifact_id: str):
     with db.conn() as c:
-        row = c.execute("SELECT * FROM artifacts WHERE id=?", (artifact_id,)).fetchone()
+        row = c.execute(
+            text("SELECT * FROM artifacts WHERE id=:id"),
+            {"id": artifact_id},
+        ).mappings().fetchone()
         if not row:
             raise HTTPException(404, "Not found")
         spans_rows = c.execute(
-            "SELECT * FROM spans WHERE artifact_id=? ORDER BY start_char", (artifact_id,)
-        ).fetchall()
+            text("SELECT * FROM spans WHERE artifact_id=:artifact_id ORDER BY start_char"),
+            {"artifact_id": artifact_id},
+        ).mappings().fetchall()
         span_ids = [s["id"] for s in spans_rows]
         clips_by_span: dict[str, list] = {sid: [] for sid in span_ids}
         if span_ids:
-            placeholders = ",".join("?" * len(span_ids))
-            for clip in c.execute(
-                f"SELECT * FROM audio_clips WHERE span_id IN ({placeholders}) ORDER BY created_at",
-                span_ids,
-            ).fetchall():
+            stmt = text(
+                "SELECT * FROM audio_clips WHERE span_id IN :span_ids ORDER BY created_at"
+            ).bindparams(bindparam("span_ids", expanding=True))
+            for clip in c.execute(stmt, {"span_ids": span_ids}).mappings().fetchall():
                 clips_by_span[clip["span_id"]].append({
                     "id": clip["id"], "url": f"/api/audio/{clip['id']}",
                     "mime_type": clip["mime_type"], "duration_ms": clip["duration_ms"],
@@ -197,7 +223,10 @@ def create_span(artifact_id: str, payload: dict):
     start = int(payload.get("start_char", -1))
     end = int(payload.get("end_char", -1))
     with db.conn() as c:
-        art = c.execute("SELECT transcription_text FROM artifacts WHERE id=?", (artifact_id,)).fetchone()
+        art = c.execute(
+            text("SELECT transcription_text FROM artifacts WHERE id=:id"),
+            {"id": artifact_id},
+        ).mappings().fetchone()
         if not art:
             raise HTTPException(404, "Artifact not found")
         text = art["transcription_text"] or ""
@@ -205,8 +234,17 @@ def create_span(artifact_id: str, payload: dict):
             raise HTTPException(400, "Invalid span range")
         sid = secrets.token_hex(8)
         c.execute(
-            "INSERT INTO spans (id, artifact_id, start_char, end_char, text, is_uncertain) VALUES (?, ?, ?, ?, ?, 0)",
-            (sid, artifact_id, start, end, text[start:end]),
+            text(
+                """INSERT INTO spans (id, artifact_id, start_char, end_char, text, is_uncertain)
+                   VALUES (:id, :artifact_id, :start_char, :end_char, :text, 0)"""
+            ),
+            {
+                "id": sid,
+                "artifact_id": artifact_id,
+                "start_char": start,
+                "end_char": end,
+                "text": text[start:end],
+            },
         )
     return {"id": sid, "start_char": start, "end_char": end, "text": text[start:end]}
 
@@ -226,25 +264,42 @@ async def upload_audio(span_id: str, request: Request,
         raise HTTPException(413, f"Audio exceeds {MAX_AUDIO_MB} MB")
 
     with db.conn() as c:
-        span = c.execute("SELECT artifact_id FROM spans WHERE id=?", (span_id,)).fetchone()
+        span = c.execute(
+            text("SELECT artifact_id FROM spans WHERE id=:id"),
+            {"id": span_id},
+        ).mappings().fetchone()
         if not span:
             raise HTTPException(404, "Span not found")
         artifact_id = span["artifact_id"]
 
     ext = {"audio/mp4": "m4a", "audio/webm": "webm", "audio/ogg": "ogg",
            "audio/mpeg": "mp3", "audio/wav": "wav"}.get(audio.content_type or "", "bin")
-    folder = AUDIO_DIR / artifact_id
-    folder.mkdir(parents=True, exist_ok=True)
     clip_id = secrets.token_hex(8)
-    path = folder / f"{clip_id}.{ext}"
-    path.write_bytes(raw)
+    file_path = None
+    if AUDIO_DIR is not None:
+        folder = AUDIO_DIR / artifact_id
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"{clip_id}.{ext}"
+        path.write_bytes(raw)
+        file_path = str(path)
 
     with db.conn() as c:
         c.execute(
-            """INSERT INTO audio_clips (id, span_id, file_path, mime_type, duration_ms, speaker_name, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (clip_id, span_id, str(path), audio.content_type or "application/octet-stream",
-             duration_ms or None, speaker_name or None, int(time.time())),
+            text(
+                """INSERT INTO audio_clips
+                   (id, span_id, file_path, content, mime_type, duration_ms, speaker_name, created_at)
+                   VALUES (:id, :span_id, :file_path, :content, :mime_type, :duration_ms, :speaker_name, :created_at)"""
+            ),
+            {
+                "id": clip_id,
+                "span_id": span_id,
+                "file_path": file_path,
+                "content": raw,
+                "mime_type": audio.content_type or "application/octet-stream",
+                "duration_ms": duration_ms or None,
+                "speaker_name": speaker_name or None,
+                "created_at": int(time.time()),
+            },
         )
     return {"id": clip_id, "url": f"/api/audio/{clip_id}"}
 
@@ -252,10 +307,17 @@ async def upload_audio(span_id: str, request: Request,
 @app.get("/api/audio/{clip_id}")
 def get_audio(clip_id: str):
     with db.conn() as c:
-        row = c.execute("SELECT file_path, mime_type FROM audio_clips WHERE id=?", (clip_id,)).fetchone()
+        row = c.execute(
+            text("SELECT file_path, content, mime_type FROM audio_clips WHERE id=:id"),
+            {"id": clip_id},
+        ).mappings().fetchone()
         if not row:
             raise HTTPException(404, "Not found")
-    return FileResponse(row["file_path"], media_type=row["mime_type"])
+    if row["content"] is not None:
+        return Response(content=bytes(row["content"]), media_type=row["mime_type"])
+    if row["file_path"]:
+        return FileResponse(row["file_path"], media_type=row["mime_type"])
+    raise HTTPException(404, "Audio content missing")
 
 
 # --- SPA static fallback (must be LAST) ---
