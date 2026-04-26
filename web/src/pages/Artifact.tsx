@@ -80,7 +80,6 @@ export function Artifact({ readOnly = false }: Props) {
 
 function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly: boolean; onChange: () => void }) {
   const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null);
-  const [shareCopied, setShareCopied] = useState(false);
 
   const segments = useMemo(() => buildSegments(artifact), [artifact]);
 
@@ -106,35 +105,32 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
     }
   }
 
-  async function share() {
-    const url = `${location.origin}/a/${artifact.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    } catch {
-      prompt("Copy this link:", url);
-    }
-  }
-
   return (
     <>
-      <Nav
-        onExportPDF={() => window.print()}
-        onShare={() => share()}
-        shareCopied={shareCopied}
-      />
+      <Nav />
       <Particles />
 
       <main className="page">
         <aside className="sidebar">
           <h1 className="artifact-title">{artifact.original_language_guess || "Artifact"}</h1>
 
-          <div className="scan-image" role="img" aria-label="Scanned artifact image">
-            <div style={{ padding: "28px 22px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", color: "#5C3A28", textAlign: "center" }}>
-              <p style={{ fontSize: "14px", margin: "0 0 8px" }}>Scan image placeholder</p>
-              <p style={{ fontSize: "12px", margin: 0, opacity: 0.7 }}>Original artifact would display here</p>
-            </div>
+          <div className="scan-image">
+            {artifact.image_url ? (
+              <img
+                className="scan-image-photo"
+                src={artifact.image_url}
+                alt="Uploaded artifact"
+              />
+            ) : (
+              <div
+                role="img"
+                aria-label="Scanned artifact image unavailable"
+                style={{ padding: "28px 22px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", color: "#5C3A28", textAlign: "center" }}
+              >
+                <p style={{ fontSize: "14px", margin: "0 0 8px" }}>Scan image unavailable</p>
+                <p style={{ fontSize: "12px", margin: 0, opacity: 0.7 }}>This artifact did not include a stored image.</p>
+              </div>
+            )}
           </div>
 
           <div className="progress-wrap">

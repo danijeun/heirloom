@@ -7,16 +7,13 @@ import logo1 from "../assets/heirloom-logo1.png";
 import logo2 from "../assets/heirloom-logo2.png";
 
 interface Props {
-  onExportPDF?: () => void;
-  onShare?: () => void;
-  shareCopied?: boolean;
   canGoBack?: boolean;
 }
 
-export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = true }: Props) {
+export function Nav({ canGoBack = true }: Props) {
   const nav = useNavigate();
   const qc = useQueryClient();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -26,7 +23,7 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
   const user = me.data?.user ?? null;
   const googleConfigured = me.data?.google_configured ?? false;
 
-  const logoSrc = theme === 'dark' ? logo2 : logo1;
+  const logoSrc = theme === "dark" ? logo2 : logo1;
 
   useEffect(() => {
     if (!menuOpen && !userMenuOpen) return;
@@ -35,13 +32,16 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
       if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setMenuOpen(false); setUserMenuOpen(false); }
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setUserMenuOpen(false);
+      }
     };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen, userMenuOpen]);
 
@@ -62,37 +62,21 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
         <img src={logoSrc} alt="Heirloom logo" className="nav-logo-img" />
       </a>
 
-      {/* Desktop / tablet: full button row */}
       <div className="nav-actions-desktop">
         <button className="nav-btn" onClick={() => nav("/mine")} aria-label="My Library">
-          <span className="hamburger">☰</span>
           <span className="nav-btn-label">My Library</span>
-        </button>
-        <button className="nav-btn nav-theme-btn" onClick={toggleTheme} aria-label="Toggle dark mode">
-          {theme === 'dark' ? '☀️' : '🌙'}
         </button>
         {canGoBack && (
           <button className="nav-btn" onClick={() => nav(-1)} aria-label="Go back">
-            ←&ensp;<span className="nav-btn-label">Back</span>
-          </button>
-        )}
-        {onExportPDF && (
-          <button className="nav-btn" onClick={onExportPDF} aria-label="Export as PDF">
-            ⬇&ensp;<span className="nav-btn-label">Export PDF</span>
-          </button>
-        )}
-        {onShare && (
-          <button className="nav-btn" onClick={onShare} aria-label="Share this artifact">
-            ⇧&ensp;<span className="nav-btn-label">{shareCopied ? "Copied" : "Share"}</span>
+            <span className="nav-btn-label">Back</span>
           </button>
         )}
 
-        {/* Auth slot */}
         {user ? (
           <div className="nav-user-wrap" ref={userMenuRef}>
             <button
               className="nav-user"
-              onClick={() => setUserMenuOpen(o => !o)}
+              onClick={() => setUserMenuOpen((o) => !o)}
               aria-label="Account menu"
               aria-expanded={userMenuOpen}
               aria-haspopup="true"
@@ -110,7 +94,7 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
               <div className="nav-dropdown" role="menu">
                 <div className="nav-dropdown-info" aria-hidden="true">{user.email}</div>
                 <button className="nav-dropdown-item" role="menuitem" onClick={onLogout}>
-                  <span aria-hidden="true">⎋</span> Sign out
+                  Sign out
                 </button>
               </div>
             )}
@@ -122,39 +106,25 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
         ) : null}
       </div>
 
-      {/* Mobile: theme toggle + menu */}
       <div className="nav-actions-mobile">
-        <button className="nav-btn nav-theme-btn" onClick={toggleTheme} aria-label="Toggle dark mode">
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
         <div className="nav-menu-wrap" ref={menuRef}>
           <button
             className="nav-btn"
-            onClick={() => setMenuOpen(o => !o)}
+            onClick={() => setMenuOpen((o) => !o)}
             aria-label="Menu"
             aria-expanded={menuOpen}
             aria-haspopup="true"
           >
-            <span className="hamburger">☰</span>
+            <span className="hamburger">Menu</span>
           </button>
           {menuOpen && (
             <div className="nav-dropdown" role="menu">
               <button className="nav-dropdown-item" role="menuitem" onClick={() => { close(); nav("/mine"); }}>
-                <span aria-hidden="true">📚</span> My Library
+                My Library
               </button>
               {canGoBack && (
                 <button className="nav-dropdown-item" role="menuitem" onClick={() => { close(); nav(-1); }}>
-                  <span aria-hidden="true">←</span> Back
-                </button>
-              )}
-              {onExportPDF && (
-                <button className="nav-dropdown-item" role="menuitem" onClick={() => { close(); onExportPDF(); }}>
-                  <span aria-hidden="true">⬇</span> Export PDF
-                </button>
-              )}
-              {onShare && (
-                <button className="nav-dropdown-item" role="menuitem" onClick={() => { close(); onShare(); }}>
-                  <span aria-hidden="true">⇧</span> {shareCopied ? "Copied" : "Share"}
+                  Back
                 </button>
               )}
               <div className="nav-dropdown-divider" aria-hidden="true" />
@@ -162,12 +132,12 @@ export function Nav({ onExportPDF, onShare, shareCopied = false, canGoBack = tru
                 <>
                   <div className="nav-dropdown-info">{user.email}</div>
                   <button className="nav-dropdown-item" role="menuitem" onClick={onLogout}>
-                    <span aria-hidden="true">⎋</span> Sign out
+                    Sign out
                   </button>
                 </>
               ) : googleConfigured ? (
                 <a href="/auth/google/login" className="nav-dropdown-item" role="menuitem">
-                  <span aria-hidden="true">⇨</span> Sign in with Google
+                  Sign in with Google
                 </a>
               ) : null}
             </div>
