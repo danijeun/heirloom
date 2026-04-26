@@ -703,7 +703,8 @@ body {
 
 .popup-btn {
   width: 100%;
-  padding: 8px 0;
+  min-height: 44px;
+  padding: 10px 0;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
@@ -908,7 +909,6 @@ body {
   font-style: italic;
   font-size: clamp(12px, 1.6vw, 14px);
   line-height: 1.5;
-  white-space: nowrap;
 }
 
 .card {
@@ -1164,6 +1164,7 @@ label.upload input {
   top: calc(100% + 8px);
   right: 0;
   min-width: 200px;
+  max-width: calc(100vw - 16px);
   background: #FFFDF8;
   border: 1px solid var(--color-paper-deep);
   border-radius: var(--radius-md);
@@ -1229,7 +1230,7 @@ label.upload input {
   font-size: 12px;
   color: var(--color-ink-light);
   cursor: pointer;
-  max-width: 180px;
+  max-width: min(180px, 50vw);
   transition: background 0.15s, border-color 0.15s;
 }
 .nav-user:hover { background: rgba(255,255,255,0.5); border-color: var(--color-purple-mid); }
@@ -1254,7 +1255,7 @@ label.upload input {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 130px;
+  max-width: min(130px, 35vw);
 }
 
 .nav-dropdown-info {
@@ -1322,6 +1323,9 @@ button, .btn, .span-token, .popup-btn, .popup-close {
   min-width: 0;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: var(--space-lg) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom));
+  max-height: 85dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 310;
   animation: sheetUp 0.22s ease-out both;
 }
@@ -1421,6 +1425,12 @@ button, .btn, .span-token, .popup-btn, .popup-close {
   max-width: 1180px;
   margin: 0 auto;
   padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+}
+
+@media (max-width: 640px) {
+  .library-page {
+    padding: var(--space-md) var(--space-md) var(--space-xl);
+  }
 }
 
 .library-header {
@@ -1844,6 +1854,7 @@ button, .btn, .span-token, .popup-btn, .popup-close {
 .paper-stack {
   position: relative;
   width: min(420px, 92vw);
+  height: clamp(360px, 64vh, 560px);
   height: clamp(360px, 64dvh, 560px);
   perspective: 1200px;
   overscroll-behavior-x: contain;

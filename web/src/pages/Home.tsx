@@ -89,8 +89,8 @@ export function Home() {
                   disabled={busy}
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
                 />
-                <span style={{ fontSize: 22 }}>Tap to take or choose a photo</span>
-                <span className="muted" style={{ fontSize: 14 }}>JPEG, PNG, HEIC up to 8 MB</span>
+                <span style={{ fontSize: 'clamp(18px, 5vw, 22px)' }}>Tap to take or choose a photo</span>
+                <span className="muted" style={{ fontSize: 'clamp(13px, 3.5vw, 14px)' }}>JPEG, PNG, HEIC up to 8 MB</span>
               </label>
             )}
             {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
