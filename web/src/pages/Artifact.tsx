@@ -34,11 +34,34 @@ export function Artifact({ readOnly = false }: Props) {
 
   if (data.status === "pending") {
     return (
-      <div>
+      <>
         <Nav canGoBack={false} />
-        <div className="app"><div className="card"><h2>Reading the artifact...</h2>
-          <p className="muted">Claude is transcribing. This usually takes 10-30 seconds.</p></div></div>
-      </div>
+        <Particles />
+        <main className="page" aria-busy="true">
+          <aside className="sidebar">
+            <div className="skel skel-title" />
+            <div className="skel skel-scan" />
+            <div className="skel skel-progress" />
+            <div className="skel-meta">
+              <div className="skel skel-meta-chip" />
+              <div className="skel skel-meta-chip" />
+            </div>
+          </aside>
+          <section className="main-col">
+            <div className="skel skel-section-label" />
+            <div className="skel skel-line" />
+            <div className="skel skel-line" />
+            <div className="skel skel-line skel-line-short" />
+            <hr className="ornament-divider" aria-hidden="true" />
+            <div className="skel skel-section-label" />
+            <div className="skel skel-line" />
+            <div className="skel skel-line skel-line-short" />
+            <p className="muted" style={{ marginTop: 12, fontStyle: 'italic', textAlign: 'center' }}>
+              Claude is transcribing. This usually takes 10–30 seconds.
+            </p>
+          </section>
+        </main>
+      </>
     );
   }
   if (data.status === "failed") {

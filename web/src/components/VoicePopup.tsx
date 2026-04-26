@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { SpanT } from "../api";
 import { startRecording as startMediaRecording } from "../recorder";
+import { useMediaQuery } from "../useMediaQuery";
 import { Waveform } from "./Waveform";
 
 interface Props {
@@ -15,6 +17,7 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
   const [recorded, setRecorded] = useState(span.audio_clips.length > 0);
   const recRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   useEffect(() => {
     if (state === "playing") {
@@ -22,6 +25,30 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
       return () => clearTimeout(t);
     }
   }, [state]);
+
+  // Esc to close
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (state === 'recording') stopRecording();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose, state]);
+
+  // If user backgrounds the tab while recording, stop & save what we have
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'hidden' && recRef.current && recRef.current.state === 'recording') {
+        try { recRef.current.stop(); } catch {}
+        setState('idle');
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
 
   async function handleBtn() {
     if (state === "idle") {
@@ -58,8 +85,8 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
   }
 
   function stopRecording() {
-    recRef.current?.stop();
-    setState("idle");
+    try { recRef.current?.stop(); } catch {}
+    setState('idle');
   }
 
   const btnLabel =
@@ -68,8 +95,14 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
     recorded ? "Play recording" :
     readOnly ? "(Read-only)" : "Record audio";
 
-  return (
-    <div className="voice-popup" role="dialog" aria-label={`Voice note for "${span.text}"`}>
+  const popup = (
+    <div
+      className={`voice-popup${isMobile ? ' sheet' : ''}`}
+      role="dialog"
+      aria-modal={isMobile ? true : undefined}
+      aria-label={`Voice note for "${span.text}"`}
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="popup-header">
         <div>
           <div className="popup-text">"{span.text}"</div>
@@ -102,4 +135,23 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
       <audio ref={audioRef} onEnded={() => setState("idle")} style={{ display: "none" }} />
     </div>
   );
+
+  if (isMobile) {
+    return createPortal(
+      <>
+        <div
+          className="voice-sheet-backdrop"
+          onClick={() => {
+            if (state === 'recording') stopRecording();
+            onClose();
+          }}
+          aria-hidden="true"
+        />
+        {popup}
+      </>,
+      document.body
+    );
+  }
+
+  return popup;
 }

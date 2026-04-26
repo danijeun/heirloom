@@ -1,8 +1,14 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMyArtifacts, useMe, type MyArtifactRow } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
+import { PaperStack } from "../components/PaperStack";
+
+type Mode = "stack" | "grid";
+const MODE_KEY = "heirloom_mine_mode";
+const INDEX_KEY = "heirloom_mine_index";
 
 const STATUS_LABEL: Record<MyArtifactRow["status"], string> = {
   ready: "Ready",
@@ -25,11 +31,41 @@ function formatDate(unixSec: number): string {
 
 export function Mine() {
   const me = useMe();
+  const navigate = useNavigate();
   const list = useQuery({
     queryKey: ["my-artifacts"],
     queryFn: fetchMyArtifacts,
     enabled: !!me.data?.user,
   });
+
+  const [mode, setMode] = useState<Mode>(() => {
+    try {
+      const saved = sessionStorage.getItem(MODE_KEY);
+      if (saved === "stack" || saved === "grid") return saved;
+    } catch {}
+    return "stack";
+  });
+  useEffect(() => { try { sessionStorage.setItem(MODE_KEY, mode); } catch {} }, [mode]);
+
+  const itemCount = list.data?.length ?? 0;
+  useEffect(() => {
+    if (itemCount > 12 && mode === "stack") {
+      try {
+        if (sessionStorage.getItem(MODE_KEY) == null) setMode("grid");
+      } catch {}
+    }
+  }, [itemCount, mode]);
+
+  const initialIndex = (() => {
+    try {
+      const v = sessionStorage.getItem(INDEX_KEY);
+      const n = v ? parseInt(v, 10) : 0;
+      return Number.isFinite(n) ? n : 0;
+    } catch { return 0; }
+  })();
+  const handleIndexChange = (i: number) => {
+    try { sessionStorage.setItem(INDEX_KEY, String(i)); } catch {}
+  };
 
   // ─── Loading the session ──────────────────────────────────
   if (me.isLoading) {
@@ -139,41 +175,69 @@ export function Mine() {
         )}
 
         {count > 0 && (
-          <section className="library-grid" aria-label="Saved artifacts">
-            {items.map((a, idx) => (
-              <Link
-                to={`/artifact/${a.id}`}
-                key={a.id}
-                className="library-card"
-                style={{ animationDelay: `${Math.min(idx * 55, 600)}ms` }}
-              >
-                <span
-                  className={`library-status library-status--${a.status}`}
-                  aria-label={`Status: ${STATUS_LABEL[a.status]}`}
-                >
-                  <span className="library-status-dot" aria-hidden="true" />
-                  {STATUS_LABEL[a.status]}
-                </span>
-                <h3 className="library-card-title">
-                  {a.original_language_guess || "Untitled fragment"}
-                </h3>
-                <time
-                  className="library-card-date"
-                  dateTime={new Date(a.created_at * 1000).toISOString()}
-                >
-                  {formatDate(a.created_at)}
-                </time>
-                <p className="library-card-preview">
-                  {truncate(a.transcription_preview, 90) || "(no transcription yet)"}
-                </p>
-                {a.has_translation && (
-                  <span className="library-card-tag" aria-label="Translation available">
-                    ✦ Translated
-                  </span>
-                )}
-              </Link>
-            ))}
-          </section>
+          <>
+            <div className="paper-mode-toggle" role="tablist" aria-label="View mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "stack"}
+                className={mode === "stack" ? "is-active" : ""}
+                onClick={() => setMode("stack")}
+              >Stack</button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "grid"}
+                className={mode === "grid" ? "is-active" : ""}
+                onClick={() => setMode("grid")}
+              >Browse all</button>
+            </div>
+
+            {mode === "stack" ? (
+              <PaperStack
+                items={items}
+                initialIndex={Math.min(initialIndex, items.length - 1)}
+                onIndexChange={handleIndexChange}
+                onOpen={(id) => navigate(`/artifact/${id}`)}
+              />
+            ) : (
+              <section className="library-grid" aria-label="Saved artifacts">
+                {items.map((a, idx) => (
+                  <Link
+                    to={`/artifact/${a.id}`}
+                    key={a.id}
+                    className="library-card"
+                    style={{ animationDelay: `${Math.min(idx * 55, 600)}ms` }}
+                  >
+                    <span
+                      className={`library-status library-status--${a.status}`}
+                      aria-label={`Status: ${STATUS_LABEL[a.status]}`}
+                    >
+                      <span className="library-status-dot" aria-hidden="true" />
+                      {STATUS_LABEL[a.status]}
+                    </span>
+                    <h3 className="library-card-title">
+                      {a.original_language_guess || "Untitled fragment"}
+                    </h3>
+                    <time
+                      className="library-card-date"
+                      dateTime={new Date(a.created_at * 1000).toISOString()}
+                    >
+                      {formatDate(a.created_at)}
+                    </time>
+                    <p className="library-card-preview">
+                      {truncate(a.transcription_preview, 90) || "(no transcription yet)"}
+                    </p>
+                    {a.has_translation && (
+                      <span className="library-card-tag" aria-label="Translation available">
+                        ✦ Translated
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </section>
+            )}
+          </>
         )}
       </main>
     </>
