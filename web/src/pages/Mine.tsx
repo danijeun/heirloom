@@ -45,6 +45,7 @@ export function Mine() {
   // Pending soft-delete: item is hidden in UI; actual DELETE fires after UNDO_MS.
   const [pending, setPending] = useState<{ item: MyArtifactRow; expiresAt: number } | null>(null);
   const pendingTimer = useRef<number | null>(null);
+  const pendingRef = useRef<MyArtifactRow | null>(null);
 
   function clearPendingTimer() {
     if (pendingTimer.current != null) {
@@ -53,11 +54,16 @@ export function Mine() {
     }
   }
 
-  async function fireDelete(id: string) {
+  async function fireDelete(item: MyArtifactRow) {
     try {
-      await deleteArtifact(id);
+      await deleteArtifact(item.id);
     } catch {
-      // Restore on failure.
+      // Network/server failure: restore the item to the cache so UI matches truth.
+      qc.setQueryData<MyArtifactRow[]>(["my-artifacts"], (prev) => {
+        const list = prev ?? [];
+        if (list.some((a) => a.id === item.id)) return list;
+        return [item, ...list];
+      });
       qc.invalidateQueries({ queryKey: ["my-artifacts"] });
       return;
     }
@@ -72,16 +78,19 @@ export function Mine() {
     );
     clearPendingTimer();
     setPending({ item, expiresAt: Date.now() + UNDO_MS });
+    pendingRef.current = item;
     pendingTimer.current = window.setTimeout(() => {
       setPending(null);
       pendingTimer.current = null;
-      fireDelete(item.id);
+      pendingRef.current = null;
+      fireDelete(item);
     }, UNDO_MS);
   }
 
   function undoDelete() {
     if (!pending) return;
     clearPendingTimer();
+    pendingRef.current = null;
     qc.setQueryData<MyArtifactRow[]>(["my-artifacts"], (prev) => {
       const list = prev ?? [];
       if (list.some((a) => a.id === pending.item.id)) return list;
@@ -93,9 +102,11 @@ export function Mine() {
   // If user navigates away with a pending delete, fire it now.
   useEffect(() => {
     return () => {
-      if (pendingTimer.current != null && pending) {
+      const item = pendingRef.current;
+      if (item) {
         clearPendingTimer();
-        fireDelete(pending.item.id);
+        pendingRef.current = null;
+        fireDelete(item);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

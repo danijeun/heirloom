@@ -70,7 +70,9 @@ export interface MyArtifactRow {
   has_translation: boolean;
 }
 
-export async function deleteArtifact(id: string): Promise<void> {
+export type DeleteResult = "deleted" | "missing";
+
+export async function deleteArtifact(id: string): Promise<DeleteResult> {
   const r = await fetch(`/api/artifacts/${id}`, {
     method: "DELETE",
     credentials: "same-origin",
@@ -81,7 +83,7 @@ export async function deleteArtifact(id: string): Promise<void> {
       const ids = getAnonymousArtifactIds().filter((x) => x !== id);
       localStorage.setItem(ANON_KEY, JSON.stringify(ids));
     } catch {}
-    return;
+    return r.status === 204 ? "deleted" : "missing";
   }
   throw new Error(await r.text());
 }

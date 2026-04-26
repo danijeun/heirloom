@@ -82,6 +82,16 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
   const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
+  function handleSelect(nextId: string | null) {
+    if (!readOnly && selectedSpanId && selectedSpanId !== nextId && artifact.id !== "demo") {
+      const prev = artifact.spans.find((s) => s.id === selectedSpanId);
+      if (prev && !prev.is_uncertain && prev.audio_clips.length === 0) {
+        deleteSpan(prev.id).then(onChange).catch((e) => console.error("Auto-cleanup failed:", e));
+      }
+    }
+    setSelectedSpanId(nextId);
+  }
+
   const segments = useMemo(() => buildSegments(artifact), [artifact]);
 
   const voiceDone = artifact.spans.filter((s) => s.audio_clips.length > 0).length;
@@ -208,7 +218,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
                       key={seg.span.id}
                       span={seg.span}
                       selected={selectedSpanId === seg.span.id}
-                      onSelect={setSelectedSpanId}
+                      onSelect={handleSelect}
                       onRecord={!readOnly ? recordSpan : undefined}
                       onDeleteSpan={!readOnly ? removeSpan : undefined}
                       onDeleteClip={!readOnly ? removeClip : undefined}

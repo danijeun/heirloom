@@ -448,6 +448,19 @@ body {
   text-underline-offset: 0.12em;
 }
 
+.span-token.recorded {
+  color: var(--color-sepia);
+  text-decoration: underline;
+  text-decoration-color: var(--color-gold);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.14em;
+}
+
+.span-token.recorded:hover,
+.span-token.recorded:focus-visible {
+  color: var(--color-gold);
+}
+
 .span-token.selected {
   color: var(--color-purple);
   text-decoration-color: currentColor;
@@ -987,6 +1000,8 @@ label.upload input {
 [data-theme="dark"] .span-token:hover { color: #F0DEB8; }
 [data-theme="dark"] .span-token.uncertain,
 [data-theme="dark"] .span-token.selected { color: #BDA0FF; }
+[data-theme="dark"] .span-token.recorded { color: #E8C97A; text-decoration-color: #E8C97A; }
+[data-theme="dark"] .span-token.recorded:hover { color: #F4D98A; }
 [data-theme="dark"] .span-token.selected {
   text-decoration-color: currentColor;
 }
@@ -1791,7 +1806,44 @@ button, .btn, .span-token, .popup-btn, .popup-close {
   width: min(420px, 92vw);
   height: clamp(360px, 64dvh, 560px);
   perspective: 1200px;
+  overscroll-behavior-x: contain;
+  touch-action: pan-y;
 }
+
+.paper-stack-arrow {
+  position: absolute;
+  top: calc(clamp(360px, 64dvh, 560px) / 2 + var(--space-md));
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(30,42,74,0.35);
+  background: rgba(255,255,255,0.7);
+  color: var(--color-ink, #1e2a4a);
+  font-size: 26px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 150ms ease, transform 150ms ease, opacity 150ms ease;
+  backdrop-filter: blur(4px);
+}
+.paper-stack-arrow:hover:not(:disabled) {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-50%) scale(1.06);
+}
+.paper-stack-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.paper-stack-arrow:focus-visible {
+  outline: 2px solid var(--color-ink, #1e2a4a);
+  outline-offset: 2px;
+}
+.paper-stack-arrow--prev { left: max(8px, calc(50% - min(420px, 92vw) / 2 - 56px)); }
+.paper-stack-arrow--next { right: max(8px, calc(50% - min(420px, 92vw) / 2 - 56px)); }
 
 .paper-card {
   position: absolute;

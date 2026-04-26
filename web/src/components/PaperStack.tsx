@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MyArtifactRow } from "../auth";
+import { useMediaQuery } from "../useMediaQuery";
 
 const SWIPE_THRESHOLD = 60;
 const TAP_SLOP = 6;
 const LIFT_MS = 220;
 const SLIDE_MS = 280;
 const HINT_MS = 4000;
+const WHEEL_THRESHOLD = 80;
+const WHEEL_COOLDOWN_MS = 400;
 
 function formatDate(unixSec: number): string {
   return new Date(unixSec * 1000).toLocaleDateString(undefined, {
@@ -49,6 +52,13 @@ export function PaperStack({ items, onOpen, onDelete, initialIndex = 0, onIndexC
   const navigatingRef = useRef(false);
   const pointerRef = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
   const topBtnRef = useRef<HTMLButtonElement | null>(null);
+  const stackRef = useRef<HTMLDivElement | null>(null);
+  const wheelAccumRef = useRef(0);
+  const wheelCooldownRef = useRef(0);
+  const indexRef = useRef(index);
+  indexRef.current = index;
+
+  const isDesktop = useMediaQuery("(hover: hover) and (pointer: fine)");
 
   useEffect(() => { onIndexChange?.(index); }, [index, onIndexChange]);
 
@@ -81,6 +91,34 @@ export function PaperStack({ items, onOpen, onDelete, initialIndex = 0, onIndexC
       setAnnounce(`Card ${next + 1} of ${total}`);
     }, SLIDE_MS);
   }
+
+  const commitSwipeRef = useRef(commitSwipe);
+  commitSwipeRef.current = commitSwipe;
+
+  useEffect(() => {
+    const el = stackRef.current;
+    if (!el || total <= 1) return;
+    function onWheel(e: WheelEvent) {
+      // Horizontal trackpad swipe: deltaX dominates.
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      const now = performance.now();
+      if (now < wheelCooldownRef.current) return;
+      wheelAccumRef.current += e.deltaX;
+      const accum = wheelAccumRef.current;
+      if (accum <= -WHEEL_THRESHOLD) {
+        if (indexRef.current > 0) commitSwipeRef.current("right");
+        wheelAccumRef.current = 0;
+        wheelCooldownRef.current = now + WHEEL_COOLDOWN_MS;
+      } else if (accum >= WHEEL_THRESHOLD) {
+        if (indexRef.current < total - 1) commitSwipeRef.current("left");
+        wheelAccumRef.current = 0;
+        wheelCooldownRef.current = now + WHEEL_COOLDOWN_MS;
+      }
+    }
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [total]);
 
   useEffect(() => { setConfirming(false); }, [index, total]);
 
@@ -151,7 +189,30 @@ export function PaperStack({ items, onOpen, onDelete, initialIndex = 0, onIndexC
 
   return (
     <div className="paper-stack-wrap">
+      {isDesktop && total > 1 && (
+        <button
+          type="button"
+          className="paper-stack-arrow paper-stack-arrow--prev"
+          aria-label="Previous entry"
+          onClick={() => commitSwipe("right")}
+          disabled={index <= 0 || !!exiting || lifting}
+        >
+          <span aria-hidden="true">‹</span>
+        </button>
+      )}
+      {isDesktop && total > 1 && (
+        <button
+          type="button"
+          className="paper-stack-arrow paper-stack-arrow--next"
+          aria-label="Next entry"
+          onClick={() => commitSwipe("left")}
+          disabled={index >= total - 1 || !!exiting || lifting}
+        >
+          <span aria-hidden="true">›</span>
+        </button>
+      )}
       <div
+        ref={stackRef}
         className="paper-stack"
         role="region"
         aria-roledescription="carousel"

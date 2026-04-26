@@ -146,7 +146,7 @@ export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, on
       onBlur={handleBlur}
     >
       <button
-        className={`span-token${isUncertain ? " uncertain" : ""}${selected ? " selected" : ""}`}
+        className={`span-token${isUncertain ? " uncertain" : ""}${!isUncertain && hasAudio ? " recorded" : ""}${selected ? " selected" : ""}`}
         onClick={handleClick}
         onFocus={() => isUncertain && !selected && setShowMeanings(true)}
         onPointerDown={handlePointerDown}
@@ -158,7 +158,7 @@ export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, on
         aria-describedby={showMeanings ? `meaning-options-${span.id}` : undefined}
       >
         {span.text}
-        {hasAudio && !selected && (
+        {hasAudio && isUncertain && !selected && (
           <span className="span-dot" aria-hidden="true" />
         )}
       </button>

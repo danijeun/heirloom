@@ -189,7 +189,7 @@ export function VoicePopup({ span, onClose, onRecord, onDeleteSpan, onDeleteClip
               {isDeleting ? "Deleting..." : "Delete recording"}
             </button>
           )}
-          {onDeleteSpan && (
+          {onDeleteSpan && (span.is_uncertain || recorded) && (
             <button
               type="button"
               className="popup-btn-danger"
