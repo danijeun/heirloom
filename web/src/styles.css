@@ -927,7 +927,7 @@ body {
 
 .app h1 {
   font-family: var(--font-display);
-  font-size: clamp(28px, 6vw, 40px);
+  font-size: clamp(24px, 5vw, 36px);
   font-weight: 700;
   color: var(--color-ink);
   margin: 0 0 4px;
@@ -947,7 +947,7 @@ body {
   color: var(--color-sepia);
   margin: 0 0 var(--space-2xl);
   font-style: italic;
-  font-size: clamp(14px, 2.2vw, 17px);
+  font-size: clamp(12px, 1.8vw, 15px);
   line-height: 1.5;
   text-wrap: pretty;
 }
