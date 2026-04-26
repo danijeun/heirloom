@@ -413,6 +413,68 @@ def create_span(artifact_id: str, payload: dict):
     return {"id": sid, "start_char": start, "end_char": end, "text": transcription[start:end]}
 
 
+@app.delete("/api/spans/{span_id}", status_code=204)
+def delete_span(span_id: str, request: Request, user=Depends(get_current_user)):
+    if request.headers.get("x-requested-with") != "heirloom-web":
+        raise HTTPException(400, "Missing required header")
+    with db.conn() as c:
+        row = c.execute(
+            text(
+                """SELECT s.artifact_id, a.owner_user_id
+                   FROM spans s JOIN artifacts a ON a.id = s.artifact_id
+                   WHERE s.id = :id"""
+            ),
+            {"id": span_id},
+        ).mappings().fetchone()
+        if not row:
+            raise HTTPException(404, "Not found")
+        owner = row["owner_user_id"]
+        if owner is not None and (user is None or user["id"] != owner):
+            raise HTTPException(403, "Forbidden")
+        clips = c.execute(
+            text("SELECT file_path FROM audio_clips WHERE span_id=:sid"),
+            {"sid": span_id},
+        ).mappings().fetchall()
+        # FK ON DELETE CASCADE removes audio_clips rows automatically.
+        c.execute(text("DELETE FROM spans WHERE id=:id"), {"id": span_id})
+    for clip in clips:
+        if clip["file_path"]:
+            try:
+                Path(clip["file_path"]).unlink(missing_ok=True)
+            except OSError as e:
+                log.warning("span-cascade unlink failed span=%s err=%s", span_id, e)
+    return Response(status_code=204)
+
+
+@app.delete("/api/audio/{clip_id}", status_code=204)
+def delete_audio(clip_id: str, request: Request, user=Depends(get_current_user)):
+    if request.headers.get("x-requested-with") != "heirloom-web":
+        raise HTTPException(400, "Missing required header")
+    with db.conn() as c:
+        row = c.execute(
+            text(
+                """SELECT ac.file_path, a.owner_user_id
+                   FROM audio_clips ac
+                   JOIN spans s ON s.id = ac.span_id
+                   JOIN artifacts a ON a.id = s.artifact_id
+                   WHERE ac.id = :id"""
+            ),
+            {"id": clip_id},
+        ).mappings().fetchone()
+        if not row:
+            raise HTTPException(404, "Not found")
+        owner = row["owner_user_id"]
+        if owner is not None and (user is None or user["id"] != owner):
+            raise HTTPException(403, "Forbidden")
+        c.execute(text("DELETE FROM audio_clips WHERE id=:id"), {"id": clip_id})
+    if row["file_path"]:
+        try:
+            Path(row["file_path"]).unlink(missing_ok=True)
+        except OSError as e:
+            log.warning("audio unlink failed clip=%s err=%s", clip_id, e)
+    return Response(status_code=204)
+
+
 @app.post("/api/spans/{span_id}/audio")
 async def upload_audio(span_id: str, request: Request,
                        audio: UploadFile = File(...),

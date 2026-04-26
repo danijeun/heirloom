@@ -13,10 +13,12 @@ interface Props {
   selected: boolean;
   onSelect: (id: string | null) => void;
   onRecord?: (spanId: string, blob: Blob, mime: string, durMs: number) => Promise<void>;
+  onDeleteSpan?: (spanId: string) => Promise<void>;
+  onDeleteClip?: (clipId: string) => Promise<void>;
   readOnly?: boolean;
 }
 
-export function SpanToken({ span, selected, onSelect, onRecord, readOnly }: Props) {
+export function SpanToken({ span, selected, onSelect, onRecord, onDeleteSpan, onDeleteClip, readOnly }: Props) {
   const hasAudio = span.audio_clips.length > 0;
   const isUncertain = span.is_uncertain;
   const [showMeanings, setShowMeanings] = useState(false);
@@ -185,6 +187,8 @@ export function SpanToken({ span, selected, onSelect, onRecord, readOnly }: Prop
           span={span}
           onClose={() => onSelect(null)}
           onRecord={onRecord ? (blob, mime, dur) => onRecord(span.id, blob, mime, dur) : undefined}
+          onDeleteSpan={onDeleteSpan ? () => onDeleteSpan(span.id) : undefined}
+          onDeleteClip={onDeleteClip}
           readOnly={readOnly}
         />
       )}

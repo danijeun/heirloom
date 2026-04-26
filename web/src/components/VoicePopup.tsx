@@ -9,12 +9,15 @@ interface Props {
   span: SpanT;
   onClose: () => void;
   onRecord?: (blob: Blob, mime: string, durMs: number) => Promise<void>;
+  onDeleteSpan?: () => Promise<void>;
+  onDeleteClip?: (clipId: string) => Promise<void>;
   readOnly?: boolean;
 }
 
-export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props) {
+export function VoicePopup({ span, onClose, onRecord, onDeleteSpan, onDeleteClip, readOnly = false }: Props) {
   const [state, setState] = useState<"idle" | "playing" | "recording">("idle");
   const [recorded, setRecorded] = useState(span.audio_clips.length > 0);
+  const [isDeleting, setIsDeleting] = useState(false);
   const recRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isMobile = useMediaQuery('(max-width: 640px)');
@@ -89,6 +92,48 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
     setState('idle');
   }
 
+  async function handleDeleteClip() {
+    const clip = span.audio_clips[0];
+    if (!clip || !onDeleteClip || isDeleting) return;
+    if (!window.confirm("Delete this recording?")) return;
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+      audioRef.current.removeAttribute("src");
+      try { audioRef.current.load(); } catch {}
+    }
+    setIsDeleting(true);
+    try {
+      await onDeleteClip(clip.id);
+      setRecorded(false);
+      setState("idle");
+    } catch (e) {
+      console.error("Delete clip failed:", e);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  async function handleDeleteSpan() {
+    if (!onDeleteSpan || isDeleting) return;
+    const hasAudio = span.audio_clips.length > 0;
+    const msg = hasAudio
+      ? "Delete this highlight and its recording? This cannot be undone."
+      : "Remove this highlight?";
+    if (!window.confirm(msg)) return;
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+      audioRef.current.removeAttribute("src");
+      try { audioRef.current.load(); } catch {}
+    }
+    setIsDeleting(true);
+    try {
+      await onDeleteSpan();
+    } catch (e) {
+      console.error("Delete span failed:", e);
+      setIsDeleting(false);
+    }
+  }
+
   const btnLabel =
     state === "recording" ? "Stop recording" :
     state === "playing" ? "Stop playback" :
@@ -131,6 +176,31 @@ export function VoicePopup({ span, onClose, onRecord, readOnly = false }: Props)
       >
         {btnLabel}
       </button>
+
+      {!readOnly && (onDeleteClip || onDeleteSpan) && (
+        <div className="popup-danger-row">
+          {recorded && onDeleteClip && (
+            <button
+              type="button"
+              className="popup-btn-danger"
+              onClick={handleDeleteClip}
+              disabled={isDeleting || state === "recording"}
+            >
+              {isDeleting ? "Deleting..." : "Delete recording"}
+            </button>
+          )}
+          {onDeleteSpan && (
+            <button
+              type="button"
+              className="popup-btn-danger"
+              onClick={handleDeleteSpan}
+              disabled={isDeleting || state === "recording"}
+            >
+              {isDeleting ? "Deleting..." : recorded ? "Delete highlight & recording" : "Remove highlight"}
+            </button>
+          )}
+        </div>
+      )}
 
       <audio ref={audioRef} onEnded={() => setState("idle")} style={{ display: "none" }} />
     </div>

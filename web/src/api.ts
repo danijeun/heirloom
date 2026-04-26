@@ -60,6 +60,22 @@ export async function createSpan(artifactId: string, start: number, end: number)
   return r.json() as Promise<{ id: string; start_char: number; end_char: number; text: string }>;
 }
 
+export async function deleteSpan(spanId: string) {
+  const r = await fetch(`/api/spans/${spanId}`, {
+    method: "DELETE",
+    headers: { "x-requested-with": "heirloom-web" },
+  });
+  if (!r.ok && r.status !== 204) throw new Error(await r.text());
+}
+
+export async function deleteClip(clipId: string) {
+  const r = await fetch(`/api/audio/${clipId}`, {
+    method: "DELETE",
+    headers: { "x-requested-with": "heirloom-web" },
+  });
+  if (!r.ok && r.status !== 204) throw new Error(await r.text());
+}
+
 export async function uploadAudio(spanId: string, blob: Blob, mimeType: string, durationMs: number) {
   const fd = new FormData();
   const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("webm") ? "webm" : "bin";

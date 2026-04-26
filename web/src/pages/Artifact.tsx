@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArtifactT, SpanT } from "../api";
-import { createSpan, getArtifact, uploadAudio } from "../api";
+import { createSpan, deleteClip, deleteSpan, getArtifact, uploadAudio } from "../api";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 import { SpanToken } from "../components/SpanToken";
@@ -106,6 +106,25 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
     }
   }
 
+  async function removeSpan(spanId: string) {
+    try {
+      await deleteSpan(spanId);
+      setSelectedSpanId(null);
+      onChange();
+    } catch (e) {
+      console.error("Delete span failed:", e);
+    }
+  }
+
+  async function removeClip(clipId: string) {
+    try {
+      await deleteClip(clipId);
+      onChange();
+    } catch (e) {
+      console.error("Delete clip failed:", e);
+    }
+  }
+
   async function addSpan(start: number, end: number) {
     try {
       const created = await createSpan(artifact.id, start, end);
@@ -191,6 +210,8 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
                       selected={selectedSpanId === seg.span.id}
                       onSelect={setSelectedSpanId}
                       onRecord={!readOnly ? recordSpan : undefined}
+                      onDeleteSpan={!readOnly ? removeSpan : undefined}
+                      onDeleteClip={!readOnly ? removeClip : undefined}
                       readOnly={readOnly}
                     />
                   );
