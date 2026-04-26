@@ -28,7 +28,7 @@ export function Artifact({ readOnly = false }: Props) {
   if (!data) return (
     <div>
       <Nav canGoBack={false} />
-      <div className="app"><div className="card muted">Loading…</div></div>
+      <div className="app"><div className="card muted">Loading...</div></div>
     </div>
   );
 
@@ -36,8 +36,8 @@ export function Artifact({ readOnly = false }: Props) {
     return (
       <div>
         <Nav canGoBack={false} />
-        <div className="app"><div className="card"><h2>Reading the artifact…</h2>
-          <p className="muted">Claude is transcribing. This usually takes 10–30 seconds.</p></div></div>
+        <div className="app"><div className="card"><h2>Reading the artifact...</h2>
+          <p className="muted">Claude is transcribing. This usually takes 10-30 seconds.</p></div></div>
       </div>
     );
   }
@@ -61,13 +61,13 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
 
   const segments = useMemo(() => buildSegments(artifact), [artifact]);
 
-  const voiceDone = artifact.spans.filter(s => s.audio_clips.length > 0).length;
+  const voiceDone = artifact.spans.filter((s) => s.audio_clips.length > 0).length;
   const voiceTotal = artifact.spans.length;
 
   const contributors = useMemo(() => {
     const names = new Set<string>();
-    artifact.spans.forEach(s => {
-      s.audio_clips.forEach(c => {
+    artifact.spans.forEach((s) => {
+      s.audio_clips.forEach((c) => {
         if (c.speaker_name) names.add(c.speaker_name);
       });
     });
@@ -79,7 +79,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
       await uploadAudio(spanId, blob, mime, durMs);
       onChange();
     } catch (e) {
-      console.error('Upload failed:', e);
+      console.error("Upload failed:", e);
     }
   }
 
@@ -89,8 +89,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
       await navigator.clipboard.writeText(url);
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
-    }
-    catch {
+    } catch {
       prompt("Copy this link:", url);
     }
   }
@@ -105,19 +104,16 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
       <Particles />
 
       <main className="page">
-        {/* Sidebar */}
         <aside className="sidebar">
           <h1 className="artifact-title">{artifact.original_language_guess || "Artifact"}</h1>
 
-          {/* Scan placeholder */}
           <div className="scan-image" role="img" aria-label="Scanned artifact image">
-            <div style={{ padding: '28px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#5C3A28', textAlign: 'center' }}>
-              <p style={{ fontSize: '14px', margin: '0 0 8px' }}>Scan image placeholder</p>
-              <p style={{ fontSize: '12px', margin: 0, opacity: 0.7 }}>Original artifact would display here</p>
+            <div style={{ padding: "28px 22px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", color: "#5C3A28", textAlign: "center" }}>
+              <p style={{ fontSize: "14px", margin: "0 0 8px" }}>Scan image placeholder</p>
+              <p style={{ fontSize: "12px", margin: 0, opacity: 0.7 }}>Original artifact would display here</p>
             </div>
           </div>
 
-          {/* Voice progress */}
           <div className="progress-wrap">
             <div className="progress-header">
               <span className="progress-label">VOICE COVERAGE</span>
@@ -126,11 +122,10 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
             <div className="progress-track" role="progressbar"
               aria-valuenow={voiceDone} aria-valuemin={0} aria-valuemax={voiceTotal}>
               <div className="progress-fill"
-                style={{ width: `${voiceTotal > 0 ? (voiceDone / voiceTotal) * 100 : 0}%` }}/>
+                style={{ width: `${voiceTotal > 0 ? (voiceDone / voiceTotal) * 100 : 0}%` }} />
             </div>
           </div>
 
-          {/* Metadata */}
           <div className="meta-grid">
             <div className="meta-chip">
               <div className="meta-label">Language</div>
@@ -142,21 +137,17 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
             </div>
           </div>
 
-          {/* Hint */}
           {!readOnly && (
             <p className="sidebar-hint">
-              Tap any uncertain word to hear or record a voice note.
-              Words with a&nbsp;<span className="hint-purple">purple glow</span>&nbsp;are
-              uncertain — Claude flagged them for human review.
+              Hover purple words to preview possible meanings.
+              Click to open recording, or long press on touch devices to see the meanings first.
             </p>
           )}
         </aside>
 
-        {/* Main content */}
         <section className="main-col">
-          {/* Transcription */}
           <div className="transcription-block">
-            <div className="section-label">Original — Claude's Transcription</div>
+            <div className="section-label">Original - Claude&apos;s Transcription</div>
             <div className="transcription-lines">
               {segments.map((seg, i) =>
                 seg.span ? (
@@ -170,30 +161,27 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
                   />
                 ) : (
                   <span key={i}>{seg.text}</span>
-                )
+                ),
               )}
             </div>
           </div>
 
-          {/* Divider */}
-          <hr className="ornament-divider" aria-hidden="true"/>
+          <hr className="ornament-divider" aria-hidden="true" />
 
-          {/* Translation */}
           {artifact.translation_text && (
             <div>
-              <div className="section-label">Translation — Claude's Draft (verify with speaker)</div>
+              <div className="section-label">Translation - Claude&apos;s Draft (verify with speaker)</div>
               <div className="translation-card">
                 <p className="translation-line">{artifact.translation_text}</p>
               </div>
             </div>
           )}
 
-          {/* Contributors */}
           {contributors.length > 0 && (
             <div className="contributors-section">
               <div className="section-label">Voice Contributors</div>
               <div className="contributors-list">
-                {contributors.map(name => (
+                {contributors.map((name) => (
                   <div key={name} className="contributor-chip">
                     <div className="contributor-avatar" aria-hidden="true">{name[0]}</div>
                     <span className="contributor-name">{name}</span>
@@ -205,7 +193,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
         </section>
       </main>
 
-      <footer className="page-footer">◈ Preserved with Heirloom · All voice data stays on your device</footer>
+      <footer className="page-footer">Preserved with Heirloom · All voice data stays on your device</footer>
     </>
   );
 }
