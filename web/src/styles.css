@@ -115,6 +115,17 @@ body {
   100% { transform: translateX(-100vw); }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    TEXT BACKGROUND (decorative centered text)
 ───────────────────────────────────────────────────────────── */
@@ -905,6 +916,7 @@ body {
   padding: var(--space-md) var(--space-xl);
   position: relative;
   z-index: 1;
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .header-with-badge {
