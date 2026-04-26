@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArtifactT, SpanT } from "../api";
 import { getArtifact, uploadAudio } from "../api";
+import { useMe } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 import { SpanToken } from "../components/SpanToken";
@@ -96,6 +97,7 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
   }
 
   return (
+<<<<<<< HEAD
     <>
       <Nav
         onExportPDF={() => window.print()}
@@ -149,6 +151,42 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
               Words with a&nbsp;<span className="hint-purple">purple glow</span>&nbsp;are
               uncertain — Claude flagged them for human review.
             </p>
+=======
+    <div className="app">
+      <h1>Heirloom</h1>
+      <div className="card">
+        <h2>Transcription</h2>
+        <p className="muted" style={{ marginTop: 0 }}>
+          Language guess: {artifact.original_language_guess || "unknown"}.
+          Highlighted spans are uncertain — tap to record what only you know.
+        </p>
+        <div id="transcript-root" className="transcript">
+          {segments.map((seg, i) =>
+            seg.span ? (
+              <mark
+                key={i}
+                className={seg.span.audio_clips.length ? "has-audio" : "uncertain"}
+                onClick={() => !readOnly && startRec(seg.span!.id)}
+                title={seg.span.audio_clips.length ? "Has voice note — tap to play" : "Tap to record"}
+              >
+                {seg.text}
+                {!!seg.span.meaning_options.length && (
+                  <span style={{ display: "block", marginTop: 8, fontSize: 12, lineHeight: 1.4 }}>
+                    {seg.span.meaning_options.map((option, idx) => (
+                      <span key={`${seg.span!.id}-meaning-${idx}`} style={{ display: "block" }}>
+                        {idx + 1}. <strong>{option.word}</strong>: {option.meaning}
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {seg.span.audio_clips.map((c) => (
+                  <audio key={c.id} src={c.url} controls style={{ display: "block", marginTop: 4, width: "100%" }} />
+                ))}
+              </mark>
+            ) : (
+              <span key={i}>{seg.text}</span>
+            )
+>>>>>>> origin/main
           )}
         </aside>
 
@@ -175,8 +213,18 @@ function Ready({ artifact, readOnly, onChange }: { artifact: ArtifactT; readOnly
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* Divider */}
           <hr className="ornament-divider" aria-hidden="true"/>
+=======
+        {!readOnly && (
+          <div className="toolbar">
+            <button onClick={recordSelection} disabled={recording}>Record selected text</button>
+            <button className="secondary" onClick={share}>{shareCopied ? "Copied!" : "Copy share link"}</button>
+          </div>
+        )}
+      </div>
+>>>>>>> origin/main
 
           {/* Translation */}
           {artifact.translation_text && (

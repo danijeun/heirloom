@@ -10,26 +10,189 @@ from anthropic import Anthropic
 MODEL = "claude-opus-4-7"
 
 SYSTEM_PROMPT = (
-    "You are assisting a family preserve a handwritten artifact in a possibly low-resource "
-    "or endangered language or dialect. Your job is to produce a faithful transcription and "
-    "a cautious draft translation. You are NOT the author; the human family member is. "
-    "Flag every word you are uncertain about by character offsets in the transcription. "
-    "Never invent content that is not visible in the image. If a portion is illegible, "
-    "say so. Respond ONLY with valid JSON matching the requested schema, no prose."
+    "You are a multilingual paleographer and linguist helping a family preserve a handwritten "
+    "artifact. The artifact may be in ANY language, script, or dialect on earth — including "
+    "endangered, extinct, regional, creole, mixed-language, or undocumented varieties. "
+    "You are a scribe, not the author. Your job is faithful transcription and a cautious draft "
+    "translation into English. Never invent, normalize, or correct what is written.\n\n"
+
+    "TRANSCRIPTION RULES:\n"
+    "1. Reproduce the text exactly as written, including non-standard spelling, abbreviations, "
+    "archaic forms, dialect features, and code-switching between languages.\n"
+    "2. If the script is non-Latin (Arabic, Hebrew, Cyrillic, Devanagari, CJK, Ge'ez, Hangeul, "
+    "Tamil, Thai, Georgian, Armenian, Tifinagh, Yi, etc.), transcribe in that native script. "
+    "Do NOT romanize unless the original is romanized.\n"
+    "3. If the handwriting is illegible at a spot, insert [?] in the transcription at that position.\n"
+    "4. Preserve line breaks as they appear.\n\n"
+
+    "TRANSLATION RULES:\n"
+    "1. Produce a cautious English draft. Mark uncertain translations with (?).\n"
+    "2. If the language is unknown or untranslatable, say so honestly and give your best guess.\n"
+    "3. Do not paraphrase — stay close to the original word order and meaning.\n\n"
+
+    "UNCERTAINTY RULES — flag a span if ANY of these apply:\n"
+    "1. Ambiguous handwriting: you guessed a character (e.g. two letters look alike in this hand).\n"
+    "2. The word belongs to a regional, dialectal, archaic, or minority vocabulary "
+    "not found in standard dictionaries of that language.\n"
+    "3. The word is a loanword, calque, or borrowing from another language that changes its meaning.\n"
+    "4. The word is a proper noun, place name, personal name, or family-specific term.\n"
+    "5. Your English translation of the word required a (?) or a parenthetical gloss.\n"
+    "6. Any part of the word is smudged, torn, faded, or obscured.\n"
+    "7. The script or orthography is non-standard, phonetic, or invented by the writer.\n"
+    "8. You are uncertain which language or dialect a word belongs to.\n\n"
+
+    "SPAN RULES:\n"
+    "- Each span covers exactly one token: one word, one morpheme cluster, or one [?] placeholder.\n"
+    "- Never merge multiple words into one span.\n"
+    "- CRITICAL: 'start' and 'end' are character offsets into 'transcription'. "
+    "transcription[start:end] must equal the span 'text' field CHARACTER FOR CHARACTER. "
+    "Count every character including accents and diacritics. Verify before outputting.\n"
+    "- Err on the side of MORE spans. A missed uncertain word is lost forever; "
+    "the elder can always dismiss a false positive.\n\n"
+
+    "Respond ONLY with valid JSON matching the schema. No prose, no markdown fences."
 )
 
 USER_INSTRUCTION = (
-    "Transcribe this handwritten artifact. Return JSON ONLY:\n"
+    "Transcribe this handwritten artifact. Return JSON ONLY — no markdown fences, no commentary:\n"
     '{\n'
-    '  "language_guess": "string (best guess at language/dialect)",\n'
-    '  "transcription": "string (the transcribed text, faithful to the original)",\n'
-    '  "translation": "string (cautious English draft translation)",\n'
-    '  "uncertain_spans": [{"start": int, "end": int, "reason": "string"}]\n'
+    '  "language_guess": "string — be maximally specific: language family, language, '
+    'dialect/region, script if detectable.",\n'
+    '  "transcription": "string — faithful copy in the original script and spelling",\n'
+    '  "translation": "string — cautious English draft; use (?) for uncertain words",\n'
+    '  "uncertain_spans": [\n'
+    '    {\n'
+    '      "start": int,\n'
+    '      "end": int,\n'
+    '      "text": "string",\n'
+    '      "reason": "string",\n'
+    '      "meaning_options": [\n'
+    '        {"word": "string", "meaning": "string"},\n'
+    '        {"word": "string", "meaning": "string"},\n'
+    '        {"word": "string", "meaning": "string"}\n'
+    "      ]\n"
+    "    }\n"
+    '  ]\n'
     "}\n"
-    "Character offsets are into transcription. No markdown fences, no commentary."
+    "For every uncertain span, provide exactly 3 meaning_options. Each option must be a plausible reading "
+    "of that specific span text in context, with a short English gloss.\n"
+    "BEFORE outputting each span, verify by counting characters from position 0 in transcription "
+    "that transcription[start:end] == text. If they do not match, fix the offsets."
+)
+
+# Unicode-aware word-token pattern.
+# Matches runs of non-whitespace, non-punctuation characters across ALL Unicode scripts:
+# Latin+accents, CJK, Arabic, Hebrew, Cyrillic, Devanagari, Thai, Hangul, Ethiopic, etc.
+_WORD_RE = re.compile(
+    r"[^\s\u0020-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007E"
+    r"\u00A0\u2000-\u206F\u2E00-\u2E7F\u3000-\u303F]+",
+    re.UNICODE,
 )
 
 _client: Anthropic | None = None
+
+
+def _normalize_meaning_options(span_text: str, meaning_options: list[dict]) -> list[dict]:
+    normalized: list[dict] = []
+    for option in meaning_options[:3]:
+        meaning = str(option.get("meaning") or "").strip()
+        if not meaning:
+            continue
+        normalized.append({"word": span_text, "meaning": meaning})
+
+    while len(normalized) < 3:
+        normalized.append(
+            {
+                "word": span_text,
+                "meaning": "Possible reading or meaning is uncertain from the handwriting and context.",
+            }
+        )
+
+    return normalized[:3]
+
+
+def _snap_to_word_boundaries(transcription: str, spans: list[dict]) -> list[dict]:
+    """
+    Snap every uncertain span to clean word boundaries in `transcription`.
+
+    Claude's character counting is sometimes off by 1–3 chars, or it returns a partial
+    word (e.g. "chilhuat" instead of "chilhuate"), producing highlights that split a word
+    mid-glyph. This function uses four strategies in order:
+
+      1. Exact text match — find the word token whose text == claimed_text, nearest offset.
+      2. Partial match  — claimed_text is a prefix/suffix/substring of a nearby token.
+      3. Contains raw_start — take the token that physically contains raw_start.
+      4. Nearest token  — raw_start fell in whitespace; take the closest token.
+
+    Works for any Unicode script (Latin, Arabic, CJK, Devanagari, etc.) because _WORD_RE
+    is script-agnostic. Deduplicates spans that resolve to the same (start, end).
+    """
+    word_tokens = [(m.start(), m.end(), m.group()) for m in _WORD_RE.finditer(transcription)]
+    fixed: list[dict] = []
+    seen: set[tuple[int, int]] = set()
+
+    for span in spans:
+        claimed_text = (span.get("text") or "").strip()
+        raw_start    = int(span.get("start", 0))
+        raw_end      = int(span.get("end", raw_start))
+        reason       = span.get("reason", "")
+        meaning_options = span.get("meaning_options") or []
+
+        # Sort tokens by distance from reported offset for strategies 1 & 2
+        candidates = sorted(word_tokens, key=lambda t: abs(t[0] - raw_start))
+
+        best_start, best_end = None, None
+
+        # Strategy 1: exact text match nearest to reported offset
+        if claimed_text:
+            for tok_start, tok_end, tok_text in candidates:
+                if tok_text == claimed_text:
+                    best_start, best_end = tok_start, tok_end
+                    break
+
+        # Strategy 2: claimed_text is a partial match of a nearby token
+        # (handles Claude returning "chilhuat" for "chilhuate", etc.)
+        if best_start is None and claimed_text:
+            for tok_start, tok_end, tok_text in candidates[:10]:
+                if (tok_text.startswith(claimed_text)
+                        or tok_text.endswith(claimed_text)
+                        or claimed_text in tok_text):
+                    best_start, best_end = tok_start, tok_end
+                    break
+
+        # Strategy 3: take the word token that contains raw_start
+        if best_start is None:
+            for tok_start, tok_end, _ in word_tokens:
+                if tok_start <= raw_start < tok_end:
+                    best_start, best_end = tok_start, tok_end
+                    break
+
+        # Strategy 4: nearest token (raw_start fell in whitespace/punctuation)
+        if best_start is None and word_tokens:
+            nearest = min(word_tokens, key=lambda t: abs(t[0] - raw_start))
+            best_start, best_end = nearest[0], nearest[1]
+
+        if best_start is None or best_end is None or best_end <= best_start:
+            continue
+        if best_start < 0 or best_end > len(transcription):
+            continue
+
+        key = (best_start, best_end)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        fixed.append({
+            "start":  best_start,
+            "end":    best_end,
+            "text":   transcription[best_start:best_end],
+            "reason": reason,
+            "meaning_options": _normalize_meaning_options(
+                transcription[best_start:best_end], meaning_options
+            ),
+        })
+
+    return fixed
 
 
 def client() -> Anthropic:
@@ -85,6 +248,10 @@ def transcribe_image(jpeg_bytes: bytes) -> dict[str, Any]:
         parsed = json.loads(raw)
     except json.JSONDecodeError as e:
         raise ValueError(f"Claude returned non-JSON: {raw[:500]}") from e
+
+    transcription = parsed.get("transcription") or ""
+    raw_spans = parsed.get("uncertain_spans") or []
+    parsed["uncertain_spans"] = _snap_to_word_boundaries(transcription, raw_spans)
 
     usage = msg.usage
     return {

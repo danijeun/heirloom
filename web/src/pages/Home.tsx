@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadImage } from "../api";
+import { recordAnonymousArtifact, useMe } from "../auth";
 import { Nav } from "../components/Nav";
 import { Particles } from "../components/Particles";
 
 export function Home() {
   const nav = useNavigate();
+  const me = useMe();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -14,6 +16,7 @@ export function Home() {
     setBusy(true);
     try {
       const { id } = await uploadImage(file);
+      if (!me.data?.user) recordAnonymousArtifact(id);
       nav(`/artifact/${id}`);
     } catch (e: any) {
       setErr(e.message || "Upload failed");

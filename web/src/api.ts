@@ -8,12 +8,18 @@ export const AudioClip = z.object({
   speaker_name: z.string().nullable().optional(),
 });
 
+export const MeaningOption = z.object({
+  word: z.string(),
+  meaning: z.string(),
+});
+
 export const Span = z.object({
   id: z.string(),
   start_char: z.number(),
   end_char: z.number(),
   text: z.string(),
   is_uncertain: z.boolean(),
+  meaning_options: z.array(MeaningOption).default([]),
   audio_clips: z.array(AudioClip).default([]),
 });
 
