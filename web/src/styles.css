@@ -2273,3 +2273,111 @@ button, .btn, .span-token, .popup-btn, .popup-close {
 }
 [data-theme="dark"] .ledger-card-title { color: #F0DDB0; }
 [data-theme="dark"] .ledger-card-preview { color: #C9B58A; }
+
+/* ─────────────────────────────────────────────────────────────
+   LEDGER PALETTE  — Option A: aged ivory + indigo ink
+───────────────────────────────────────────────────────────── */
+body:has(.library-page--ledger) {
+  background:
+    linear-gradient(155deg,
+      #F5EFE2 0%,
+      #EDE3CB 55%,
+      #E4D8BC 100%);
+}
+
+.library-page--ledger {
+  /* Override design tokens for this page only */
+  --color-cream:        #FDFAF2;
+  --color-paper:        #F7F1E1;
+  --color-paper-mid:    #ECE2C8;
+  --color-paper-deep:   #D8C9A6;
+
+  --color-ink:          #1E2A4A;  /* deep indigo */
+  --color-ink-light:    #3D4A6B;
+  --color-sepia:        #5A6B8C;  /* desaturated indigo for meta text */
+  color: var(--color-ink);
+}
+
+/* Rules + card borders: cool indigo, not sepia brown */
+.library-page--ledger .ledger-rule,
+.library-page--ledger .ledger-card-rule,
+.library-page--ledger .paper-card-rule {
+  background: rgba(30,42,74,0.22);
+}
+.library-page--ledger .ledger-card,
+.library-page--ledger .paper-card {
+  border-color: rgba(30,42,74,0.20);
+}
+.library-page--ledger .ledger-card:hover {
+  border-color: var(--color-ink);
+  box-shadow: 0 8px 18px -6px rgba(30,42,74,0.28);
+}
+
+/* Texture stays — but on the cooler ivory base it reads as aged paper */
+.library-page--ledger .ledger-card {
+  background-image:
+    url("./assets/paper-texture.png"),
+    linear-gradient(160deg,
+      var(--color-cream) 0%,
+      var(--color-paper) 60%,
+      var(--color-paper-mid) 100%);
+}
+.library-page--ledger .paper-card {
+  background-image:
+    url("./assets/paper-texture.png"),
+    radial-gradient(circle at 18% 8%, rgba(255,255,255,0.50), transparent 40%),
+    linear-gradient(160deg,
+      var(--color-cream) 0%,
+      var(--color-paper) 55%,
+      var(--color-paper-mid) 100%);
+}
+
+/* Active states + focus rings switch to indigo */
+.library-page--ledger .ledger-link {
+  color: var(--color-ink);
+  border-bottom-color: var(--color-sepia);
+}
+.library-page--ledger .ledger-link:hover { border-bottom-color: var(--color-ink); }
+.library-page--ledger .ledger-link:focus-visible,
+.library-page--ledger .ledger-card:focus-visible,
+.library-page--ledger .ledger-view-link:focus-visible,
+.library-page--ledger .paper-stack-dot:focus-visible {
+  outline-color: var(--color-ink);
+}
+.library-page--ledger .paper-stack-dot { background: rgba(30,42,74,0.30); }
+.library-page--ledger .paper-stack-dot.is-active { background: var(--color-ink); }
+
+/* Stack peek-card shadow tinted indigo so it reads as one palette */
+.library-page--ledger .paper-card {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 2px 6px rgba(30,42,74,0.08),
+    0 22px 38px -14px rgba(30,42,74,0.30);
+}
+.library-page--ledger .paper-card--lifting {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.65) inset,
+    0 30px 60px -10px rgba(30,42,74,0.40);
+}
+
+/* Dark variant of Option A: deep midnight + warm ivory text */
+[data-theme="dark"] body:has(.library-page--ledger) {
+  background: linear-gradient(155deg, #161B2E 0%, #1E2A4A 60%, #11162A 100%);
+}
+[data-theme="dark"] .library-page--ledger {
+  --color-cream:     #2A3559;
+  --color-paper:     #1E2A4A;
+  --color-paper-mid: #161E36;
+  --color-ink:       #F2E9D0;
+  --color-ink-light: #C9BFA5;
+  --color-sepia:     #8B96B2;
+}
+[data-theme="dark"] .library-page--ledger .ledger-rule,
+[data-theme="dark"] .library-page--ledger .ledger-card-rule,
+[data-theme="dark"] .library-page--ledger .paper-card-rule {
+  background: rgba(242,233,208,0.22);
+}
+[data-theme="dark"] .library-page--ledger .ledger-card,
+[data-theme="dark"] .library-page--ledger .paper-card {
+  border-color: rgba(242,233,208,0.18);
+}
